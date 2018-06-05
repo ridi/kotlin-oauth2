@@ -12,6 +12,7 @@ class WebViewActivity : Activity() {
 
     companion object {
         var url: String = "https://account.dev.ridi.io/"
+        var cookies: String = ""
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,7 +27,7 @@ class WebViewActivity : Activity() {
             }
 
             override fun onPageFinished(view: WebView, url: String) {
-                val cookies = CookieManager.getInstance().getCookie(url)
+                cookies = CookieManager.getInstance().getCookie(url)
                 Log.e("WebViewActivity", "All the cookies in a string:" + cookies)
             }
         }

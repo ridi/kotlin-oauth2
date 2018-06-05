@@ -1,7 +1,6 @@
 package com.ridi.oauth2
 
 import android.util.Log
-import android.webkit.CookieManager
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -41,21 +40,17 @@ interface OAuth2Service {
     class Intercept : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
-            Log.e("Interceptor", "Request URL => " + originalRequest.url().toString())
-            Log.e("Interceptor", "Request cookies => " + CookieManager.getInstance().getCookie(originalRequest.url().host()))
-
             val builder = originalRequest.newBuilder().apply {
-                addHeader("Cookie", CookieManager.getInstance().getCookie(originalRequest.url().host())
-                    ?: "")
+                addHeader("Cookie", WebViewActivity.cookies)
             }
 
             val response = chain.proceed(builder.build())
 
             Log.e("Interceptor", "Response URL => " + response.request().url())
 
-            if (!response.headers("Set-Cookie").isEmpty()) {
+            if (!response.headers("set-cookie").isEmpty()) {
                 val cookies = HashSet<String>()
-                response.headers("Set-Cookie").forEach {
+                response.headers("set-cookie").forEach {
                     cookies.add(it)
                 }
                 Log.e("Interceptor", "Response cookies => " + cookies.toString())
