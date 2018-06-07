@@ -2,7 +2,6 @@ package com.ridi.oauth2
 
 import android.app.Activity
 import android.os.Bundle
-import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -12,7 +11,7 @@ class WebViewActivity : Activity() {
 
     companion object {
         var url: String = "https://account.dev.ridi.io/"
-        var cookies: String = ""
+        var cookies = HashSet<String>()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,8 +26,7 @@ class WebViewActivity : Activity() {
             }
 
             override fun onPageFinished(view: WebView, url: String) {
-                cookies = CookieManager.getInstance().getCookie(url)
-                Log.e("WebViewActivity", "All the cookies in a string:" + cookies)
+                cookies.add(CookieManager.getInstance().getCookie(url))
             }
         }
         webView.settings.javaScriptEnabled = true

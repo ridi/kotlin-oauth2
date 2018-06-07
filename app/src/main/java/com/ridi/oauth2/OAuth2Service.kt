@@ -1,6 +1,7 @@
 package com.ridi.oauth2
 
 import android.util.Log
+import com.ridi.oauth2.WebViewActivity.Companion.cookies
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -21,7 +22,7 @@ interface OAuth2Service {
 
     @POST("ridi/token")
     fun ridiToken(@Query("ridi-at") authToken: String,
-                  @Query("ridi_rt") refreshToken: String): Call<JSONObject>
+                  @Query("ridi-rt") refreshToken: String): Call<JSONObject>
 
     companion object Factory {
         fun create(): OAuth2Service {
@@ -38,22 +39,30 @@ interface OAuth2Service {
     }
 
     class Intercept : Interceptor {
+        var tokenJSON = JSONObject()
+
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
             val builder = originalRequest.newBuilder().apply {
-                addHeader("Cookie", WebViewActivity.cookies)
+                WebViewActivity.cookies.forEach {
+                    addHeader("Cookie",it)
+                }
             }
 
             val response = chain.proceed(builder.build())
 
-            Log.e("Interceptor", "Response URL => " + response.request().url())
-
             if (!response.headers("set-cookie").isEmpty()) {
-                val cookies = HashSet<String>()
                 response.headers("set-cookie").forEach {
                     cookies.add(it)
+                    if (it.split("=")[0] == "ridi-at") {
+                        tokenJSON.put("ridi-at", it.split("=")[1])
+                        Log.e(javaClass.name, "ridiATT!!!!!!!!!!!!!!!!! => ${it.split("=")[1]}")
+                    }
+                    if (it.split("=")[0] == "ridi-rt") {
+                        tokenJSON.put("ridi-rt", it.split("=")[1])
+                        Log.e(javaClass.name, "ridiRT!!!!! => ${it.split("=")[1]}")
+                    }
                 }
-                Log.e("Interceptor", "Response cookies => " + cookies.toString())
             }
             return response
         }

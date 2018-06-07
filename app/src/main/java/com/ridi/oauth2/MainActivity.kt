@@ -21,11 +21,11 @@ class MainActivity : Activity() {
                     "code", "app://authorized")
                 call.enqueue(object : retrofit2.Callback<ResponseBody> {
                     override fun onFailure(call: retrofit2.Call<ResponseBody>?, t: Throwable?) {
-                        Log.e("MainActivity", "onFailure")
+                        Log.e(javaClass.name, "onFailure")
                     }
 
-                    override fun onResponse(call: retrofit2.Call<ResponseBody>?, response: retrofit2.Response<ResponseBody>?) {
-                        Log.e("MainActivity", "response => " + response)
+                    override fun onResponse(call: retrofit2.Call<ResponseBody>?, response: retrofit2.Response<ResponseBody>) {
+                        Log.e(javaClass.name, "response => " + response)
                     }
                 })
             }
@@ -33,6 +33,9 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.loginButton).setOnClickListener {
             val intent = Intent(this, WebViewActivity::class.java)
             startActivity(intent)
+        }
+        findViewById<Button>(R.id.refreshButton).setOnClickListener {
+
         }
     }
 }
