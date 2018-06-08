@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import okhttp3.ResponseBody
+import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Response
 
 class MainActivity : Activity() {
 
@@ -13,10 +16,10 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val service = OAuth2Service.create()
 
         findViewById<Button>(R.id.button).setOnClickListener {
             Thread().run {
+                val service = OAuth2Service.create()
                 val call = service.ridiAuthorize("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL",
                     "code", "app://authorized")
                 call.enqueue(object : retrofit2.Callback<ResponseBody> {
@@ -35,7 +38,22 @@ class MainActivity : Activity() {
             startActivity(intent)
         }
         findViewById<Button>(R.id.refreshButton).setOnClickListener {
+            val service = OAuth2Service.create()
+            Thread().run {
+                val call = service.ridiToken(RidiOAuth2.getAuthToken(), RidiOAuth2.getRefreshToken())
+                call.enqueue(object : retrofit2.Callback<ResponseBody> {
+                    override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                        Log.e(javaClass.name, "failure")
+                    }
 
+                    override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>) {
+                        val jsonObject = JSONObject(response.body()?.string())
+                        Log.e(javaClass.name, "expires At => ${jsonObject.getString("expires_at")}")
+                        Log.e(javaClass.name, "expires_In => ${jsonObject.getString("expires_in")}")
+                    }
+                })
+
+            }
         }
     }
 }
