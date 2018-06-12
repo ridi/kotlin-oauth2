@@ -1,6 +1,5 @@
 package com.ridi.oauth2
 
-import android.util.Log
 import com.ridi.oauth2.WebViewActivity.Companion.cookies
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -41,32 +40,27 @@ interface OAuth2Service {
 
     class Intercept : Interceptor {
         var tokenJSON = JSONObject()
+        val USER_AGENT_FOR_OKHTTP = String(System.getProperty("http.agent").toCharArray().filter { it in ' '..'~' }.toCharArray())
 
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
             val builder = originalRequest.newBuilder().apply {
+                addHeader("User-Agent", USER_AGENT_FOR_OKHTTP)
                 WebViewActivity.cookies.forEach {
                     addHeader("Cookie", it)
                 }
             }
 
             val response = chain.proceed(builder.build())
-
-            if (originalRequest.url().toString().contains("ridi/token")) {
-                return response
-            }
-
             if (response.headers("set-cookie").isEmpty().not()) {
                 tokenJSON = JSONObject()
                 response.headers("set-cookie").forEach {
                     cookies.add(it)
                     if (it.split("=", ";")[0] == "ridi-at" || it.split("=", ";")[0] == "ridi-rt") {
                         tokenJSON.put(it.split("=", ";")[0], it.split("=", ";")[1])
-                        Log.e(javaClass.name, "${it.split("=", ";")[0]} => ${it.split("=", ";")[1]}")
                     }
                 }
                 if (tokenJSON.isNull("ridi-at").not()) {
-                    Log.e(javaClass.name, "saveJSONFILE")
                     RidiOAuth2.saveJSONFile(tokenJSON)
                 }
             }

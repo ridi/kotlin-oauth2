@@ -16,29 +16,24 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val service = OAuth2Service.create()
 
-        findViewById<Button>(R.id.button).setOnClickListener {
-            Thread().run {
-                val service = OAuth2Service.create()
-                val call = service.ridiAuthorize("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL",
-                    "code", "app://authorized")
-                call.enqueue(object : retrofit2.Callback<ResponseBody> {
-                    override fun onFailure(call: retrofit2.Call<ResponseBody>?, t: Throwable?) {
-                        Log.e(javaClass.name, "onFailure")
-                    }
-
-                    override fun onResponse(call: retrofit2.Call<ResponseBody>?, response: retrofit2.Response<ResponseBody>) {
-                        Log.e(javaClass.name, "response => " + response)
-                    }
-                })
-            }
-        }
         findViewById<Button>(R.id.loginButton).setOnClickListener {
             val intent = Intent(this, WebViewActivity::class.java)
             startActivity(intent)
         }
+
+        findViewById<Button>(R.id.button).setOnClickListener {
+            Thread().run {
+                RidiOAuth2.setClientId("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL")
+                RidiOAuth2.getOAuthToken("app://authorized").subscribe({
+                    Log.e(javaClass.name, "Received => ${it}")
+                }, {
+                    Log.e(javaClass.name, "Error => ${it}")
+                })
+            }
+        }
         findViewById<Button>(R.id.refreshButton).setOnClickListener {
-            val service = OAuth2Service.create()
             Thread().run {
                 val call = service.ridiToken(RidiOAuth2.getAuthToken(), RidiOAuth2.getRefreshToken())
                 call.enqueue(object : retrofit2.Callback<ResponseBody> {
@@ -52,7 +47,6 @@ class MainActivity : Activity() {
                         Log.e(javaClass.name, "expires_In => ${jsonObject.getString("expires_in")}")
                     }
                 })
-
             }
         }
     }
