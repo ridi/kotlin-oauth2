@@ -18,17 +18,11 @@
             android:text="로그인" />
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/getAuthTokenButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
-            android:text="검색" />
+            android:text="AuthToken 가져오기" />
 
-        <Button
-            android:id="@+id/refreshButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:text="갱신" />
     </LinearLayout>
 </RelativeLayout>

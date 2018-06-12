@@ -25,13 +25,17 @@ interface OAuth2Service {
                   @Header("Cookie") refreshToken: String): Call<ResponseBody>
 
     companion object Factory {
+        val DEV_HOST = "https://account.dev.ridi.io/"
+        val REAL_HOST = "https://account.ridibooks.com/"
+        val HOST = DEV_HOST
+
         fun create(): OAuth2Service {
             val client = OkHttpClient().newBuilder()
                 .addNetworkInterceptor(Intercept())
                 .build()
             val retrofit = Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl("https://account.dev.ridi.io/")
+                .baseUrl(HOST)
                 .client(client)
                 .build()
             return retrofit.create(OAuth2Service::class.java)
