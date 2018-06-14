@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import com.ridi.androidoauth2.RidiOAuth2
 
 class MainActivity : Activity() {
 

@@ -1,4 +1,4 @@
-package com.ridi.oauth2
+package com.ridi.androidoauth2
 
 import android.os.Environment
 import android.util.Base64
@@ -18,8 +18,10 @@ object RidiOAuth2 {
     private var accessTokenHeader = ""
     private var accessTokenBody = ""
 
+    var cookies = HashSet<String>()
+
     fun setClientId(clientId: String) {
-        this.clientId = clientId
+        RidiOAuth2.clientId = clientId
     }
 
     fun saveJSONFile(tokenJSON: JSONObject) {

@@ -1,6 +1,6 @@
-package com.ridi.oauth2
+package com.ridi.androidoauth2
 
-import com.ridi.oauth2.WebViewActivity.Companion.cookies
+import com.ridi.androidoauth2.RidiOAuth2.cookies
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -50,7 +50,7 @@ interface OAuth2Service {
             val originalRequest = chain.request()
             val builder = originalRequest.newBuilder().apply {
                 addHeader("User-Agent", USER_AGENT_FOR_OKHTTP)
-                WebViewActivity.cookies.forEach {
+                RidiOAuth2.cookies.forEach {
                     addHeader("Cookie", it)
                 }
             }
