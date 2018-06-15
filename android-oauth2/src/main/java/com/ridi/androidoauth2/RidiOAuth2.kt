@@ -24,6 +24,10 @@ object RidiOAuth2 {
         RidiOAuth2.clientId = clientId
     }
 
+    fun getClientId(): String {
+        return clientId
+    }
+
     fun saveJSONFile(tokenJSON: JSONObject) {
         if (file.exists()) {
             file.delete()
