@@ -1,31 +1,24 @@
 package com.ridi.androidoauth2
 
 import android.os.Environment
-import android.util.Base64
+import com.auth0.android.jwt.JWT
 import io.reactivex.Observable
 import okhttp3.ResponseBody
-import org.json.JSONException
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
-import java.util.Calendar
 
 object RidiOAuth2 {
     private var clientId = ""
     private val file = File(Environment.getExternalStorageDirectory().absolutePath + "/tokenJSON.json")
-    private var accessTokenHeader = ""
-    private var accessTokenBody = ""
+    private lateinit var jwt: JWT
 
     var cookies = HashSet<String>()
 
     fun setClientId(clientId: String) {
         RidiOAuth2.clientId = clientId
-    }
-
-    fun getClientId(): String {
-        return clientId
     }
 
     fun saveJSONFile(tokenJSON: JSONObject) {
@@ -54,28 +47,9 @@ object RidiOAuth2 {
         return tokenJSON.getString("ridi-rt")
     }
 
-    fun parseAccessToken() {
-        val splitString = getAccessToken().split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        val base64EncodedHeader = splitString[0]
-        val base64EncodedBody = splitString[1]
-        accessTokenHeader = String(Base64.decode(base64EncodedHeader, Base64.DEFAULT))
-        accessTokenBody = String(Base64.decode(base64EncodedBody, Base64.DEFAULT))
-    }
-
-    fun getJSONObject(jsonString: String): JSONObject {
-        var jsonObject = JSONObject()
-        try {
-            jsonObject = JSONObject(jsonString)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-        return jsonObject
-    }
-
     fun isAccessTokenExpired(): Boolean {
-        parseAccessToken()
-        val body = getJSONObject(accessTokenBody)
-        return body.getString("exp").toInt() < Calendar.getInstance().timeInMillis / 1000
+        jwt = JWT(getAccessToken())
+        return jwt.isExpired(0)
     }
 
     fun getOAuthToken(redirectUri: String): Observable<String> {

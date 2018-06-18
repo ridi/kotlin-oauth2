@@ -51,7 +51,11 @@ interface OAuth2Service {
             val builder = originalRequest.newBuilder().apply {
                 addHeader("User-Agent", USER_AGENT_FOR_OKHTTP)
                 RidiOAuth2.cookies.forEach {
-                    addHeader("Cookie", it)
+                    try {
+                        addHeader("Cookie", it)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
                 }
             }
 
