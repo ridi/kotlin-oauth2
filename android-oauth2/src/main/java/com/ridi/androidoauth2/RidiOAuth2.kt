@@ -53,7 +53,7 @@ object RidiOAuth2 {
     }
 
     fun getOAuthToken(redirectUri: String): Observable<String> {
-        val service = OAuth2Service.create()
+        val manager = ApiManager.create()
         if (file.exists().not()) {
             if (clientId == "") {
                 return Observable.create {
@@ -62,7 +62,7 @@ object RidiOAuth2 {
                 }
             }
             return Observable.create {
-                service.ridiAuthorize(clientId, "code", redirectUri).enqueue(object : Callback<ResponseBody> {
+                manager.ridiAuthorize(clientId, "code", redirectUri).enqueue(object : Callback<ResponseBody> {
                     override fun onFailure(call: Call<ResponseBody>?, t: Throwable) {
                         it.onError(Throwable("API calls fail"))
                         it.onComplete()
@@ -87,7 +87,7 @@ object RidiOAuth2 {
                 return Observable.just(getAccessToken())
             } else {
                 return Observable.create {
-                    service.ridiToken(getAccessToken(), getRefreshToken()).enqueue(object : Callback<ResponseBody> {
+                    manager.ridiToken(getAccessToken(), getRefreshToken()).enqueue(object : Callback<ResponseBody> {
                         override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                             it.onError(Throwable("API calls fail"))
                             it.onComplete()

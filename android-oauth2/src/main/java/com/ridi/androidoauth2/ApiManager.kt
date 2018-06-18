@@ -14,7 +14,7 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-interface OAuth2Service {
+interface ApiManager {
     @GET("ridi/authorize")
     fun ridiAuthorize(@Query("client_id") client_id: String,
                       @Query("response_type") response_type: String,
@@ -29,7 +29,7 @@ interface OAuth2Service {
         val REAL_HOST = "https://account.ridibooks.com/"
         val HOST = DEV_HOST
 
-        fun create(): OAuth2Service {
+        fun create(): ApiManager {
             val client = OkHttpClient().newBuilder()
                 .addNetworkInterceptor(Intercept())
                 .build()
@@ -38,7 +38,7 @@ interface OAuth2Service {
                 .baseUrl(HOST)
                 .client(client)
                 .build()
-            return retrofit.create(OAuth2Service::class.java)
+            return retrofit.create(ApiManager::class.java)
         }
     }
 
