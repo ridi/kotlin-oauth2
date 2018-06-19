@@ -70,10 +70,11 @@ object RidiOAuth2 {
 
                     override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>) {
                         if (response.code() == 302) {
-                            if (response.headers().get("Location") == redirectUri) {
+                            val redirectLocation = response.headers().get("Location")
+                            if (redirectLocation == redirectUri) {
                                 it.onNext(getAccessToken())
                             } else {
-                                it.onError(Throwable(response.headers().get("Location")))
+                                it.onError(Throwable(redirectLocation))
                             }
                         } else {
                             it.onError(Throwable("Status code Error ${response.code()}"))

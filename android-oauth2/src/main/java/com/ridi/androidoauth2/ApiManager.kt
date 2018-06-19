@@ -69,8 +69,9 @@ interface ApiManager {
                 tokenJSON = JSONObject()
                 response.headers("set-cookie").forEach {
                     cookies.add(it)
-                    if (it.split("=", ";")[0] == "ridi-at" || it.split("=", ";")[0] == "ridi-rt") {
-                        tokenJSON.put(it.split("=", ";")[0], it.split("=", ";")[1])
+                    val cookie = it.split("=", ";")
+                    if (cookie[0] == "ridi-at" || cookie[0] == "ridi-rt") {
+                        tokenJSON.put(cookie[0], cookie[1])
                     }
                 }
                 if (tokenJSON.isNull("ridi-at").not()) {
