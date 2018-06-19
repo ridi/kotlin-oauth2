@@ -22,7 +22,7 @@ class MainActivity : Activity() {
             Thread().run {
                 RidiOAuth2.setClientId("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL")
                 RidiOAuth2.getOAuthToken("app://authorized").subscribe({
-                    Log.e(javaClass.name, "Received => $it")
+                    Log.d(javaClass.name, "Received => $it")
                 }, {
                     Log.e(javaClass.name, "Error => $it")
                 })
