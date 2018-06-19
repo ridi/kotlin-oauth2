@@ -16,13 +16,17 @@ import retrofit2.http.Query
 
 interface ApiManager {
     @GET("ridi/authorize")
-    fun ridiAuthorize(@Query("client_id") client_id: String,
-                      @Query("response_type") response_type: String,
-                      @Query("redirect_uri") redirect_uri: String): Call<ResponseBody>
+    fun ridiAuthorize(
+        @Query("client_id") client_id: String,
+        @Query("response_type") response_type: String,
+        @Query("redirect_uri") redirect_uri: String
+    ): Call<ResponseBody>
 
     @POST("ridi/token")
-    fun ridiToken(@Header("Cookie") authToken: String,
-                  @Header("Cookie") refreshToken: String): Call<ResponseBody>
+    fun ridiToken(
+        @Header("Cookie") authToken: String,
+        @Header("Cookie") refreshToken: String
+    ): Call<ResponseBody>
 
     companion object Factory {
         val DEV_HOST = "https://account.dev.ridi.io/"
@@ -44,7 +48,8 @@ interface ApiManager {
 
     class Intercept : Interceptor {
         var tokenJSON = JSONObject()
-        val USER_AGENT_FOR_OKHTTP = String(System.getProperty("http.agent").toCharArray().filter { it in ' '..'~' }.toCharArray())
+        val USER_AGENT_FOR_OKHTTP = String(System.getProperty("http.agent").toCharArray().filter { it in ' '..'~' }
+            .toCharArray())
 
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
