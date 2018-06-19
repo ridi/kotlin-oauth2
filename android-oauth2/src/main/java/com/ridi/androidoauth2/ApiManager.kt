@@ -23,8 +23,8 @@ interface ApiManager {
     ): Call<ResponseBody>
 
     @POST("ridi/token")
-    fun ridiToken(
-        @Header("Cookie") authToken: String,
+    fun refreshAccessToken(
+        @Header("Cookie") accessToken: String,
         @Header("Cookie") refreshToken: String
     ): Call<ResponseBody>
 

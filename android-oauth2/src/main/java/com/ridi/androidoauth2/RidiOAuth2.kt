@@ -62,43 +62,45 @@ object RidiOAuth2 {
                 }
             }
             return Observable.create {
-                manager.ridiAuthorize(clientId, "code", redirectUri).enqueue(object : Callback<ResponseBody> {
-                    override fun onFailure(call: Call<ResponseBody>?, t: Throwable) {
-                        it.onError(Throwable("API calls fail"))
-                        it.onComplete()
-                    }
-
-                    override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>) {
-                        if (response.code() == 302) {
-                            val redirectLocation = response.headers().get("Location")
-                            if (redirectLocation == redirectUri) {
-                                it.onNext(getAccessToken())
-                            } else {
-                                it.onError(Throwable(redirectLocation))
-                            }
-                        } else {
-                            it.onError(Throwable("Status code Error ${response.code()}"))
+                manager.ridiAuthorize(clientId, "code", redirectUri)
+                    .enqueue(object : Callback<ResponseBody> {
+                        override fun onFailure(call: Call<ResponseBody>?, t: Throwable) {
+                            it.onError(Throwable("API calls fail"))
+                            it.onComplete()
                         }
-                        it.onComplete()
-                    }
-                })
+
+                        override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>) {
+                            if (response.code() == 302) {
+                                val redirectLocation = response.headers().get("Location")
+                                if (redirectLocation == redirectUri) {
+                                    it.onNext(getAccessToken())
+                                } else {
+                                    it.onError(Throwable(redirectLocation))
+                                }
+                            } else {
+                                it.onError(Throwable("Status code Error ${response.code()}"))
+                            }
+                            it.onComplete()
+                        }
+                    })
             }
         } else {
             if (isAccessTokenExpired().not()) {
                 return Observable.just(getAccessToken())
             } else {
                 return Observable.create {
-                    manager.ridiToken(getAccessToken(), getRefreshToken()).enqueue(object : Callback<ResponseBody> {
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                            it.onError(Throwable("API calls fail"))
-                            it.onComplete()
-                        }
+                    manager.refreshAccessToken(getAccessToken(), getRefreshToken())
+                        .enqueue(object : Callback<ResponseBody> {
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
+                                it.onError(Throwable("API calls fail"))
+                                it.onComplete()
+                            }
 
-                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                            it.onNext(getAccessToken())
-                            it.onComplete()
-                        }
-                    })
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                                it.onNext(getAccessToken())
+                                it.onComplete()
+                            }
+                        })
                 }
             }
         }
