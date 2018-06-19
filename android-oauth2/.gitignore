@@ -1,1 +1,4 @@
 /build
+.idea/*
+!.idea/codeStyles
+!.idea/inspectionProfiles
