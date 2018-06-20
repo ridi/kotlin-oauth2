@@ -1,4 +1,19 @@
-/build
+# Glob
+.DS_Store
+*~
+*.swp
+*.mchg
+*.pyc
+*.pbxuser
+*.mode1v3
+*.bak
+*.prefs
+*.iml
 .idea/*
-!.idea/codeStyles
-!.idea/inspectionProfiles
+.gradle
+Thumbs.db
+.svn
+local.properties
+build/
+fastlane/*.json
+fastlane/*.xml
