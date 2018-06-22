@@ -10,9 +10,9 @@ import com.ridi.androidoauth2.RidiOAuth2
 
 class WebViewActivity : Activity() {
 
-    companion object {
-        var url: String = "https://account.dev.ridi.io/"
-    }
+    private val DEV_HOST = "account.dev.ridi.io/"
+    private val REAL_HOST = "account.ridibooks.com/"
+    private val BASE_URL = "https://$DEV_HOST"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,10 +26,19 @@ class WebViewActivity : Activity() {
             }
 
             override fun onPageFinished(view: WebView, url: String) {
-                RidiOAuth2.cookies.add(CookieManager.getInstance().getCookie(url))
+                val totalCookies = CookieManager.getInstance().getCookie(url)
+                if (totalCookies != null) {
+                    val splitCookies = totalCookies.split(";")
+                    splitCookies.forEach { cookie ->
+                        val keyValue = cookie.split("=")
+                        if (keyValue[0] == "PHPSESSID") {
+                            RidiOAuth2.setSessionId(keyValue[1])
+                        }
+                    }
+                }
             }
         }
         webView.settings.javaScriptEnabled = true
-        webView.loadUrl(url)
+        webView.loadUrl(BASE_URL)
     }
 }

@@ -1,6 +1,9 @@
 package com.ridi.androidoauth2
 
+import com.ridi.androidoauth2.RidiOAuth2.BASE_URL
 import com.ridi.androidoauth2.RidiOAuth2.cookies
+import com.ridi.androidoauth2.RidiOAuth2.parseCookie
+import com.ridi.books.helper.io.saveToFile
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -14,12 +17,12 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-interface ApiManager {
+internal interface ApiManager {
     @GET("ridi/authorize")
-    fun ridiAuthorize(
-        @Query("client_id") client_id: String,
-        @Query("response_type") response_type: String,
-        @Query("redirect_uri") redirect_uri: String
+    fun requestAuthorization(
+        @Query("client_id") clientId: String,
+        @Query("response_type") responseType: String,
+        @Query("redirect_uri") redirectUri: String
     ): Call<ResponseBody>
 
     @POST("ridi/token")
@@ -29,53 +32,42 @@ interface ApiManager {
     ): Call<ResponseBody>
 
     companion object Factory {
-        val DEV_HOST = "https://account.dev.ridi.io/"
-        val REAL_HOST = "https://account.ridibooks.com/"
-        val HOST = DEV_HOST
-
         fun create(): ApiManager {
             val client = OkHttpClient().newBuilder()
-                .addNetworkInterceptor(Intercept())
+                .addNetworkInterceptor(CookieInterceptor())
                 .build()
             val retrofit = Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(HOST)
+                .baseUrl(BASE_URL)
                 .client(client)
                 .build()
             return retrofit.create(ApiManager::class.java)
         }
     }
 
-    class Intercept : Interceptor {
-        var tokenJSON = JSONObject()
-        val USER_AGENT_FOR_OKHTTP = String(System.getProperty("http.agent").toCharArray().filter { it in ' '..'~' }
-            .toCharArray())
+    private class CookieInterceptor : Interceptor {
+        private val USER_AGENT_FOR_OKHTTP =
+            String(System.getProperty("http.agent").toCharArray().filter { it in ' '..'~' }.toCharArray())
 
         override fun intercept(chain: Interceptor.Chain): Response {
+            val tokenJSON = JSONObject()
             val originalRequest = chain.request()
             val builder = originalRequest.newBuilder().apply {
                 addHeader("User-Agent", USER_AGENT_FOR_OKHTTP)
                 RidiOAuth2.cookies.forEach {
-                    try {
-                        addHeader("Cookie", it)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                    addHeader("Cookie", it)
                 }
             }
 
             val response = chain.proceed(builder.build())
-            if (response.headers("set-cookie").isEmpty().not()) {
-                tokenJSON = JSONObject()
-                response.headers("set-cookie").forEach {
+            val cookieHeaders = response.headers().values("Set-Cookie")
+            if (cookieHeaders.isNotEmpty()) {
+                cookieHeaders.forEach {
                     cookies.add(it)
-                    val cookie = it.split("=", ";")
-                    if (cookie[0] == "ridi-at" || cookie[0] == "ridi-rt") {
-                        tokenJSON.put(cookie[0], cookie[1])
-                    }
+                    parseCookie(it)
                 }
-                if (tokenJSON.isNull("ridi-at").not()) {
-                    RidiOAuth2.saveJSONFile(tokenJSON)
+                if (tokenJSON.isNull("ridi-at").not() && tokenJSON.isNull("ridi-rt").not()) {
+                    tokenJSON.toString().saveToFile(RidiOAuth2.tokenFile)
                 }
             }
             return response
