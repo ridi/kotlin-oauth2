@@ -10,31 +10,41 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 
-object RidiOAuth2 {
+class RidiOAuth2 {
     private var clientId = ""
+    private var manager = ApiManager
+
+    companion object {
+        private const val DEV_HOST = "account.dev.ridi.io/"
+        private const val REAL_HOST = "account.ridibooks.com/"
+        internal var BASE_URL = "https://$REAL_HOST"
+
+        var instance = RidiOAuth2()
+
+        internal lateinit var tokenFile: File
+        internal fun JSONObject.parseCookie(cookieString: String) {
+            val cookie = cookieString.split("=", ";")
+            if (cookie[0] == "ridi-at" || cookie[0] == "ridi-rt") {
+                put(cookie[0], cookie[1])
+            }
+        }
+    }
 
     private var refreshToken = ""
     private var rawAccessToken = ""
     private lateinit var parsedAccessToken: JWT
-    internal lateinit var tokenFile: File
-
-    internal var cookies = HashSet<String>()
-
-    private const val DEV_HOST = "account.dev.ridi.io/"
-    private const val REAL_HOST = "account.ridibooks.com/"
-    internal var BASE_URL = "https://$REAL_HOST"
 
     fun setDev() {
         BASE_URL = "https://$DEV_HOST"
     }
 
     fun setSessionId(sessionId: String) {
-        RidiOAuth2.cookies = HashSet()
-        RidiOAuth2.cookies.add("PHPSESSID=$sessionId;")
+        manager.cookies = HashSet()
+        manager.cookies.add("PHPSESSID=$sessionId;")
     }
 
     fun setClientId(clientId: String) {
-        RidiOAuth2.clientId = clientId
+        this.clientId = clientId
     }
 
     fun setTokenFilePath(path: String) {
@@ -64,7 +74,7 @@ object RidiOAuth2 {
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
-        val manager = ApiManager.create()
+        // documentation : about Scheduler UIThread로 고정
 
         if (tokenFile.exists().not()) {
             return if (clientId == "") {
@@ -74,7 +84,7 @@ object RidiOAuth2 {
                 }
             } else {
                 Observable.create { emitter ->
-                    manager.requestAuthorization(clientId, "code", redirectUri)
+                    manager.create().requestAuthorization(clientId, "code", redirectUri)
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 emitter.onError(t)
@@ -102,7 +112,7 @@ object RidiOAuth2 {
         } else {
             return if (isAccessTokenExpired()) {
                 Observable.create { emitter ->
-                    manager.refreshAccessToken(getAccessToken(), getRefreshToken())
+                    manager.create().refreshAccessToken(getAccessToken(), getRefreshToken())
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                                 emitter.onError(IllegalStateException())
@@ -118,13 +128,6 @@ object RidiOAuth2 {
             } else {
                 Observable.just(parsedAccessToken)
             }
-        }
-    }
-
-    fun JSONObject.parseCookie(cookieString: String) {
-        val cookie = cookieString.split("=", ";")
-        if (cookie[0] == "ridi-at" || cookie[0] == "ridi-rt") {
-            put(cookie[0], cookie[1])
         }
     }
 }

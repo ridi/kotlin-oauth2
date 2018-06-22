@@ -9,7 +9,6 @@ import android.widget.Button
 import com.ridi.oauth2.RidiOAuth2
 
 class MainActivity : Activity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -21,10 +20,10 @@ class MainActivity : Activity() {
 
         findViewById<Button>(R.id.getAuthTokenButton).setOnClickListener {
             Thread().run {
-                RidiOAuth2.setDev()
-                RidiOAuth2.setTokenFilePath(Environment.getExternalStorageDirectory().absolutePath + "/tokenJSON.json")
-                RidiOAuth2.setClientId("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL")
-                RidiOAuth2.getOAuthToken("app://authorized").subscribe({
+                RidiOAuth2.instance.setDev()
+                RidiOAuth2.instance.setTokenFilePath(Environment.getExternalStorageDirectory().absolutePath + "/tokenJSON.json")
+                RidiOAuth2.instance.setClientId("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL")
+                RidiOAuth2.instance.getOAuthToken("app://authorized").subscribe({
                     Log.d(javaClass.name, "Received => $it")
                 }, {
                     Log.e(javaClass.name, "Error => $it")
