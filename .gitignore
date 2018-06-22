@@ -1,9 +1,19 @@
-*.iml
-.gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
+# Glob
 .DS_Store
-/build
-/captures
-.externalNativeBuild
+*~
+*.swp
+*.mchg
+*.pyc
+*.pbxuser
+*.mode1v3
+*.bak
+*.prefs
+*.iml
+.idea/*
+.gradle
+Thumbs.db
+.svn
+local.properties
+build/
+fastlane/*.json
+fastlane/*.xml
