@@ -3,6 +3,8 @@ package com.ridi.oauth2
 import com.auth0.android.jwt.JWT
 import com.ridi.books.helper.io.loadObject
 import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.android.schedulers.AndroidSchedulers
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
@@ -74,16 +76,14 @@ class RidiOAuth2 {
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
-        // documentation : about Scheduler UIThread로 고정
-
         if (tokenFile.exists().not()) {
             return if (clientId == "") {
-                Observable.create { emitter ->
+                Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     emitter.onError(IllegalStateException())
                     emitter.onComplete()
-                }
+                }).subscribeOn(AndroidSchedulers.mainThread())
             } else {
-                Observable.create { emitter ->
+                Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     manager.create().requestAuthorization(clientId, "code", redirectUri)
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
@@ -107,11 +107,11 @@ class RidiOAuth2 {
                                 emitter.onComplete()
                             }
                         })
-                }
+                }).subscribeOn(AndroidSchedulers.mainThread())
             }
         } else {
             return if (isAccessTokenExpired()) {
-                Observable.create { emitter ->
+                Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     manager.create().refreshAccessToken(getAccessToken(), getRefreshToken())
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
@@ -124,9 +124,10 @@ class RidiOAuth2 {
                                 emitter.onComplete()
                             }
                         })
-                }
+                }).subscribeOn(AndroidSchedulers.mainThread())
             } else {
                 Observable.just(parsedAccessToken)
+                    .subscribeOn(AndroidSchedulers.mainThread())
             }
         }
     }
