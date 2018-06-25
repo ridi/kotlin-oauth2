@@ -11,6 +11,9 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
+import java.io.FileNotFoundException
+import java.net.MalformedURLException
+import java.security.InvalidParameterException
 
 class RidiOAuth2 {
     private var clientId = ""
@@ -32,6 +35,8 @@ class RidiOAuth2 {
         }
     }
 
+    private var tokenFilePath = ""
+
     private var refreshToken = ""
     private var rawAccessToken = ""
     private lateinit var parsedAccessToken: JWT
@@ -50,7 +55,8 @@ class RidiOAuth2 {
     }
 
     fun setTokenFilePath(path: String) {
-        tokenFile = File(path)
+        tokenFilePath = path
+        tokenFile = File(tokenFilePath)
     }
 
     private fun readJSONFile() = tokenFile.loadObject<String>() ?: ""
@@ -76,6 +82,12 @@ class RidiOAuth2 {
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
+        if (tokenFilePath == "") {
+            return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
+                emitter.onError(FileNotFoundException())
+                emitter.onComplete()
+            }).subscribeOn(AndroidSchedulers.mainThread())
+        }
         if (!tokenFile.exists()) {
             return if (clientId == "") {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
@@ -99,10 +111,10 @@ class RidiOAuth2 {
                                         getAccessToken()
                                         emitter.onNext(parsedAccessToken)
                                     } else {
-                                        emitter.onError(IllegalAccessException())
+                                        emitter.onError(MalformedURLException())
                                     }
                                 } else {
-                                    emitter.onError(Throwable("Status code Error ${response.code()}"))
+                                    emitter.onError(InvalidParameterException("${response.code()}"))
                                 }
                                 emitter.onComplete()
                             }
