@@ -21,7 +21,8 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.getAuthTokenButton).setOnClickListener {
             Thread().run {
                 RidiOAuth2.instance.setDev()
-                RidiOAuth2.instance.setTokenFilePath(Environment.getExternalStorageDirectory().absolutePath + "/tokenJSON.json")
+                RidiOAuth2.instance.setTokenFilePath(Environment.getExternalStorageDirectory().absolutePath +
+                    "/tokenJSON.json")
                 RidiOAuth2.instance.setClientId("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL")
                 RidiOAuth2.instance.getOAuthToken("app://authorized").subscribe({
                     Log.d(javaClass.name, "Received => $it")
