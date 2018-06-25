@@ -76,7 +76,7 @@ class RidiOAuth2 {
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
-        if (tokenFile.exists().not()) {
+        if (!tokenFile.exists()) {
             return if (clientId == "") {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     emitter.onError(IllegalStateException())
