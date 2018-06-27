@@ -28,6 +28,8 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
 
+    api "com.android.support:design:27.1.1"
+    api 'com.squareup.okhttp3:mockwebserver:3.7.0'
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     api "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     api 'com.squareup.retrofit2:retrofit:2.4.0'

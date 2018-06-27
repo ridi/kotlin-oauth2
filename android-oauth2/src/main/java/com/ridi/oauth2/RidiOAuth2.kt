@@ -88,7 +88,7 @@ class RidiOAuth2 {
                 emitter.onComplete()
             }).subscribeOn(AndroidSchedulers.mainThread())
         }
-        if (!tokenFile.exists()) {
+        if (tokenFile.exists().not()) {
             return if (clientId == "") {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     emitter.onError(IllegalStateException())

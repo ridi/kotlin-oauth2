@@ -72,7 +72,7 @@ internal interface ApiManager {
                     cookies.add(it)
                     tokenJSON.parseCookie(it)
                 }
-                if (!tokenJSON.isNull("ridi-at") && !tokenJSON.isNull("ridi-rt")) {
+                if (tokenJSON.isNull("ridi-at").not() && tokenJSON.isNull("ridi-rt").not()) {
                     tokenJSON.toString().saveToFile(RidiOAuth2.tokenFile)
                 }
             }
