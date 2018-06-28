@@ -59,11 +59,14 @@ class RidiOAuth2 {
         tokenFile = File(tokenFilePath)
     }
 
-    private fun readJSONFile() = tokenFile.loadObject<String>() ?: ""
+    private fun readJSONFile() = tokenFile.loadObject<String>() ?: throw FileNotFoundException()
 
     fun getAccessToken(): String {
         if (rawAccessToken == "") {
-            rawAccessToken = JSONObject(readJSONFile()).getString("ridi-at")
+            val jsonObject = JSONObject(readJSONFile())
+            if (jsonObject.has("ridi-at")) {
+                rawAccessToken = jsonObject.getString("ridi-at")
+            }
         }
         parsedAccessToken = JWT(rawAccessToken)
         return rawAccessToken
@@ -71,7 +74,10 @@ class RidiOAuth2 {
 
     fun getRefreshToken(): String {
         if (refreshToken == "") {
-            refreshToken = JSONObject(readJSONFile()).getString("ridi-rt")
+            val jsonObject = JSONObject(readJSONFile())
+            if (jsonObject.has("ridi-rt")) {
+                refreshToken = jsonObject.getString("ridi-rt")
+            }
         }
         return refreshToken
     }
