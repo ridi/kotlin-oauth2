@@ -3,6 +3,8 @@ package com.ridi.oauth2
 import android.Manifest
 import android.os.Environment
 import android.support.test.rule.GrantPermissionRule
+import com.ridi.books.helper.io.loadObject
+import com.ridi.books.helper.io.saveToFile
 import junit.framework.Assert.assertEquals
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -48,6 +50,14 @@ class RidiOAuth2Test {
         if (File(tokenFilePath).exists()) {
             File(tokenFilePath).delete()
         }
+    }
+
+    @Test
+    fun saveFile() {
+        RidiOAuth2.instance.setTokenFilePath(tokenFilePath)
+        val file = RidiOAuth2.tokenFile
+        "AAA".saveToFile(RidiOAuth2.tokenFile)
+        assertEquals(file.loadObject<String>(), "AAA")
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
