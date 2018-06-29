@@ -1,7 +1,8 @@
 package com.ridi.oauth2
 
 import android.Manifest
-import android.os.Environment
+import android.content.Context
+import android.support.test.InstrumentationRegistry
 import android.support.test.rule.GrantPermissionRule
 import com.ridi.books.helper.io.loadObject
 import com.ridi.books.helper.io.saveToFile
@@ -26,6 +27,7 @@ class RidiOAuth2Test {
         Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     private lateinit var mockWebServer: MockWebServer
+    private lateinit var context: Context
 
     companion object {
         private const val VALID_SESSION_ID = "1"
@@ -37,8 +39,7 @@ class RidiOAuth2Test {
         private const val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
     }
 
-    private val tokenFilePath = Environment.getExternalStorageDirectory().absolutePath +
-        "/tokenJSONTest.json"
+    private var tokenFilePath = ""
 
     @Before
     fun setUp() {
@@ -47,6 +48,10 @@ class RidiOAuth2Test {
         RidiOAuth2.BASE_URL = mockWebServer.url("/").toString()
 
         mockWebServer.setDispatcher(dispatcher)
+
+        context = InstrumentationRegistry.getContext()
+        tokenFilePath = context.filesDir.absolutePath + "/tokenTest.json"
+
         if (File(tokenFilePath).exists()) {
             File(tokenFilePath).delete()
         }
