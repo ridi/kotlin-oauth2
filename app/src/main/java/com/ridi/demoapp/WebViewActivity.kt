@@ -1,6 +1,8 @@
 package com.ridi.demoapp
 
+import android.annotation.TargetApi
 import android.app.Activity
+import android.os.Build
 import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
@@ -20,6 +22,15 @@ class WebViewActivity : Activity() {
 
         val webView = findViewById<WebView>(R.id.webView)
         webView.webViewClient = object : WebViewClient() {
+
+            @Suppress("OverridingDeprecatedMember")
+            override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                view.loadUrl(url)
+                @Suppress("DEPRECATION")
+                return super.shouldOverrideUrlLoading(view, url)
+            }
+
+            @TargetApi(Build.VERSION_CODES.N)
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 view.loadUrl(request.url.toString())
                 return true

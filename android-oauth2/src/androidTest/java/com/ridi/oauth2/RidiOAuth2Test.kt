@@ -1,11 +1,7 @@
 package com.ridi.oauth2
 
-import android.Manifest
 import android.content.Context
 import android.support.test.InstrumentationRegistry
-import android.support.test.rule.GrantPermissionRule
-import com.ridi.books.helper.io.loadObject
-import com.ridi.books.helper.io.saveToFile
 import junit.framework.Assert.assertEquals
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -15,17 +11,11 @@ import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.fail
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.security.InvalidParameterException
 
 class RidiOAuth2Test {
-    @Rule
-    @JvmField
-    var mRuntimePermissionRule = GrantPermissionRule.grant(Manifest.permission.READ_EXTERNAL_STORAGE,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
     private lateinit var mockWebServer: MockWebServer
     private lateinit var context: Context
 
@@ -46,23 +36,13 @@ class RidiOAuth2Test {
         mockWebServer = MockWebServer()
         mockWebServer.start()
         RidiOAuth2.BASE_URL = mockWebServer.url("/").toString()
-
         mockWebServer.setDispatcher(dispatcher)
-
         context = InstrumentationRegistry.getContext()
-        tokenFilePath = context.filesDir.absolutePath + "/tokenTest.json"
 
+        tokenFilePath = context.filesDir.absolutePath + "/tokenTest.json"
         if (File(tokenFilePath).exists()) {
             File(tokenFilePath).delete()
         }
-    }
-
-    @Test
-    fun saveFile() {
-        RidiOAuth2.instance.setTokenFilePath(tokenFilePath)
-        val file = RidiOAuth2.tokenFile
-        "AAA".saveToFile(RidiOAuth2.tokenFile)
-        assertEquals(file.loadObject<String>(), "AAA")
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
