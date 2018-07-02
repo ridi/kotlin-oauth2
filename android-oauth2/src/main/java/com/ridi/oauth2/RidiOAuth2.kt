@@ -62,7 +62,7 @@ class RidiOAuth2 {
     private fun readJSONFile() = tokenFile.loadObject<String>() ?: throw FileNotFoundException()
 
     fun getAccessToken(): String {
-        if (rawAccessToken == "") {
+        if (rawAccessToken.isEmpty()) {
             val jsonObject = JSONObject(readJSONFile())
             if (jsonObject.has("ridi-at")) {
                 rawAccessToken = jsonObject.getString("ridi-at")
@@ -73,7 +73,7 @@ class RidiOAuth2 {
     }
 
     fun getRefreshToken(): String {
-        if (refreshToken == "") {
+        if (refreshToken.isEmpty()) {
             val jsonObject = JSONObject(readJSONFile())
             if (jsonObject.has("ridi-rt")) {
                 refreshToken = jsonObject.getString("ridi-rt")
@@ -88,14 +88,14 @@ class RidiOAuth2 {
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
-        if (tokenFilePath == "") {
+        if (tokenFilePath.isEmpty()) {
             return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                 emitter.onError(FileNotFoundException())
                 emitter.onComplete()
             }).subscribeOn(AndroidSchedulers.mainThread())
         }
         if (tokenFile.exists().not()) {
-            return if (clientId == "") {
+            return if (clientId.isEmpty()) {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     emitter.onError(IllegalStateException())
                     emitter.onComplete()
