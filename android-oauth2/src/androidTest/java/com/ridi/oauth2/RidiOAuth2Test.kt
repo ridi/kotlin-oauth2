@@ -66,7 +66,7 @@ class RidiOAuth2Test {
     fun needClientId() {
         RidiOAuth2.instance.setClientId("")
         RidiOAuth2.instance.setSessionId(VALID_SESSION_ID)
-        RidiOAuth2.instance.setTokenFilePath(tokenFilePath)
+        RidiOAuth2.instance.createTokenFileFromPath(tokenFilePath)
         try {
             RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
@@ -80,7 +80,7 @@ class RidiOAuth2Test {
     fun needTokenFilePath() {
         RidiOAuth2.instance.setClientId(CLIENT_ID)
         RidiOAuth2.instance.setSessionId(VALID_SESSION_ID)
-        RidiOAuth2.instance.setTokenFilePath("")
+        RidiOAuth2.instance.createTokenFileFromPath("")
         try {
             RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
@@ -94,7 +94,7 @@ class RidiOAuth2Test {
     fun returnLoginURL() {
         RidiOAuth2.instance.setClientId(CLIENT_ID)
         RidiOAuth2.instance.setSessionId(INVALID_SESSION_ID)
-        RidiOAuth2.instance.setTokenFilePath(tokenFilePath)
+        RidiOAuth2.instance.createTokenFileFromPath(tokenFilePath)
 
         try {
             RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingSingle()
@@ -110,7 +110,7 @@ class RidiOAuth2Test {
     fun workProperly() {
         RidiOAuth2.instance.setClientId(CLIENT_ID)
         RidiOAuth2.instance.setSessionId(VALID_SESSION_ID)
-        RidiOAuth2.instance.setTokenFilePath(tokenFilePath)
+        RidiOAuth2.instance.createTokenFileFromPath(tokenFilePath)
         try {
             RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingForEach {
                 assertEquals(it.subject, "AndroidKim")

@@ -41,7 +41,7 @@ class RidiOAuth2 {
     private var rawAccessToken = ""
     private lateinit var parsedAccessToken: JWT
 
-    fun setDev() {
+    fun setDevMode() {
         BASE_URL = "https://$DEV_HOST"
     }
 
@@ -54,7 +54,7 @@ class RidiOAuth2 {
         this.clientId = clientId
     }
 
-    fun setTokenFilePath(path: String) {
+    fun createTokenFileFromPath(path: String) {
         tokenFilePath = path
         tokenFile = File(tokenFilePath)
     }
