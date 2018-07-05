@@ -1,6 +1,6 @@
 package com.ridi.oauth2
 
-import com.auth0.android.jwt.JWT
+import android.util.Base64
 import com.ridi.books.helper.io.loadObject
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
@@ -14,6 +14,9 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.net.MalformedURLException
 import java.security.InvalidParameterException
+import java.util.Calendar
+
+data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
 class RidiOAuth2 {
     private var clientId = ""
@@ -68,8 +71,17 @@ class RidiOAuth2 {
                 rawAccessToken = jsonObject.getString("ridi-at")
             }
         }
-        parsedAccessToken = JWT(rawAccessToken)
+        parsedAccessToken = parseAccessToken()
         return rawAccessToken
+    }
+
+    fun parseAccessToken(): JWT {
+        val splitString = rawAccessToken.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        // splitString[0]에는 필요한 정보가 없다.
+        val jsonObject = JSONObject(String(Base64.decode(splitString[1], Base64.DEFAULT)))
+        return JWT(jsonObject.getString("sub"),
+            jsonObject.getInt("u_idx"),
+            jsonObject.getInt("exp"))
     }
 
     fun getRefreshToken(): String {
@@ -84,7 +96,7 @@ class RidiOAuth2 {
 
     private fun isAccessTokenExpired(): Boolean {
         getAccessToken()
-        return parsedAccessToken.isExpired(0)
+        return parsedAccessToken.expiresAt < Calendar.getInstance().timeInMillis / 1000
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {

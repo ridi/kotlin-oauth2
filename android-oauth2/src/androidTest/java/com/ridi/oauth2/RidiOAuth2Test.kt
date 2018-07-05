@@ -24,8 +24,9 @@ class RidiOAuth2Test {
         private const val INVALID_SESSION_ID = "2"
         private const val CLIENT_ID = "3"
         private const val APP_AUTHORIZED = "app://authorized"
-        private const val RIDI_AT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwi" +
-            "bmFtZSI6IkFuZHJvaWRLaW0iLCJpYXQiOjE1MTYyMzkwMjJ9.Do4pxOtVe7zUQTG2MTHPVSEnb3kXX_Fb-uTfv_FOgUI"
+        private const val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
+            "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
+            "zVWlIMWtnTCIsInNjb3BlIjoiYWxsIn0.KP_jrSc1KZ36-TYf-oiTyMl2Zn-dm9C8x-eY0bV0uQ8"
         private const val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
     }
 
