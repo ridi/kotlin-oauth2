@@ -28,7 +28,7 @@ class MainActivity : Activity() {
                 ridiOAuth2.tokenFile = File(applicationContext.filesDir.absolutePath +
                     "/tokenJSON.json")
                 ridiOAuth2.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
-                ridiOAuth2.getOAuthToken("app://authorized").subscribe({
+                ridiOAuth2.getJWT("app://authorized").subscribe({
                     Log.d(javaClass.name, "Received => $it")
                 }, {
                     Log.e(javaClass.name, "Error => $it")

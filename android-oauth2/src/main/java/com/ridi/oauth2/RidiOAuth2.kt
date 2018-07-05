@@ -56,7 +56,7 @@ class RidiOAuth2 {
 
     private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
 
-    fun getAccessToken(): String {
+    private fun getAccessToken(): String {
         if (rawAccessToken == null) {
             val jsonObject = JSONObject(readJSONFile())
             if (jsonObject.has(COOKIE_RIDI_AT)) {
@@ -67,7 +67,7 @@ class RidiOAuth2 {
         return rawAccessToken!!
     }
 
-    fun parseAccessToken(): JWT {
+    private fun parseAccessToken(): JWT {
         val splitString = rawAccessToken!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         // splitString[0]에는 필요한 정보가 없다.
         val jsonObject = JSONObject(String(Base64.decode(splitString[1], Base64.DEFAULT)))
@@ -76,7 +76,7 @@ class RidiOAuth2 {
             jsonObject.getInt("exp"))
     }
 
-    fun getRefreshToken(): String {
+    private fun getRefreshToken(): String {
         if (refreshToken == null) {
             val jsonObject = JSONObject(readJSONFile())
             if (jsonObject.has(COOKIE_RIDI_RT)) {
@@ -91,7 +91,7 @@ class RidiOAuth2 {
         return parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
     }
 
-    fun getOAuthToken(redirectUri: String): Observable<JWT> {
+    fun getJWT(redirectUri: String): Observable<JWT> {
         val manager = ApiManager()
         manager.cookieInterceptor.tokenFile = tokenFile
         return Observable.create(ObservableOnSubscribe<JWT> { emitter ->

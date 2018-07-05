@@ -23,14 +23,16 @@ class RidiOAuth2Test {
     private lateinit var context: Context
     private var ridiOAuth2 = RidiOAuth2()
 
-    private val VALID_SESSION_ID = "1"
-    private val INVALID_SESSION_ID = "2"
-    private val CLIENT_ID = "3"
-    private val APP_AUTHORIZED = "app://authorized"
-    private val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
-        "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
-        "zVWlIMWtnTCIsInNjb3BlIjoiYWxsIn0.KP_jrSc1KZ36-TYf-oiTyMl2Zn-dm9C8x-eY0bV0uQ8"
-    private val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
+    companion object {
+        private const val VALID_SESSION_ID = "1"
+        private const val INVALID_SESSION_ID = "2"
+        private const val CLIENT_ID = "3"
+        private const val APP_AUTHORIZED = "app://authorized"
+        private const val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
+            "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
+            "zVWlIMWtnTCIsInNjb3BlIjoiYWxsIn0.KP_jrSc1KZ36-TYf-oiTyMl2Zn-dm9C8x-eY0bV0uQ8"
+        private const val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
+    }
 
     private var tokenFile: File? = null
 
@@ -71,7 +73,7 @@ class RidiOAuth2Test {
         ridiOAuth2.setSessionId(VALID_SESSION_ID)
         ridiOAuth2.tokenFile = tokenFile
         try {
-            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, IllegalStateException::class)
             return
@@ -85,7 +87,7 @@ class RidiOAuth2Test {
         ridiOAuth2.setSessionId(VALID_SESSION_ID)
         ridiOAuth2.tokenFile = null
         try {
-            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, RuntimeException::class)
             return
@@ -100,7 +102,7 @@ class RidiOAuth2Test {
         ridiOAuth2.tokenFile = tokenFile
 
         try {
-            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingSingle()
         } catch (e: InvalidParameterException) {
             assertEquals(e::class, InvalidParameterException::class)
             assertEquals(e.message, "200")
@@ -115,7 +117,7 @@ class RidiOAuth2Test {
         ridiOAuth2.setSessionId(VALID_SESSION_ID)
         ridiOAuth2.tokenFile = tokenFile
         try {
-            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingForEach {
+            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingForEach {
                 assertEquals(it.subject, "AndroidKim")
             }
         } catch (e: Exception) {
