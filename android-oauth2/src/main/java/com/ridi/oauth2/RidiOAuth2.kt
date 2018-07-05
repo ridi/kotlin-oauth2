@@ -92,8 +92,6 @@ class RidiOAuth2 {
     }
 
     fun getJWT(redirectUri: String): Observable<JWT> {
-        val manager = ApiManager()
-        manager.cookieInterceptor.tokenFile = tokenFile
         return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
             if (tokenFile == null) {
                 emitter.onError(FileNotFoundException())
@@ -102,10 +100,10 @@ class RidiOAuth2 {
                 emitter.onError(IllegalStateException())
                 emitter.onComplete()
             } else if (tokenFile!!.exists().not()) {
-                requestAuthorization(emitter, manager, redirectUri)
+                requestAuthorization(emitter, redirectUri)
             } else {
                 if (isAccessTokenExpired()) {
-                    refreshAccessToken(emitter, manager)
+                    refreshAccessToken(emitter)
                 } else {
                     emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
@@ -114,7 +112,9 @@ class RidiOAuth2 {
         }).subscribeOn(AndroidSchedulers.mainThread())
     }
 
-    private fun requestAuthorization(emitter: ObservableEmitter<JWT>, manager: ApiManager, redirectUri: String) {
+    private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
+        val manager = ApiManager()
+        manager.cookieInterceptor.tokenFile = tokenFile
         manager.service.requestAuthorization(clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
@@ -140,7 +140,9 @@ class RidiOAuth2 {
             })
     }
 
-    private fun refreshAccessToken(emitter: ObservableEmitter<JWT>, manager: ApiManager) {
+    private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
+        val manager = ApiManager()
+        manager.cookieInterceptor.tokenFile = tokenFile
         return manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
