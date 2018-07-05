@@ -4,6 +4,7 @@ import com.ridi.books.helper.io.saveToFile
 import com.ridi.oauth2.RidiOAuth2.Companion.BASE_URL
 import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_AT
 import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_RT
+import com.ridi.oauth2.RidiOAuth2.Companion.cookies
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -43,14 +44,6 @@ internal interface ApiManager {
                 .build()
             return retrofit.create(ApiManager::class.java)
         }
-
-        var cookies = HashSet<String>()
-        private fun JSONObject.parseCookie(cookieString: String) {
-            val cookie = cookieString.split("=", ";")
-            if (cookie[0] == COOKIE_RIDI_AT || cookie[0] == COOKIE_RIDI_RT) {
-                put(cookie[0], cookie[1])
-            }
-        }
     }
 
     private class CookieInterceptor : Interceptor {
@@ -72,7 +65,9 @@ internal interface ApiManager {
                 val tokenJSON = JSONObject()
                 cookieHeaders.forEach {
                     cookies.add(it)
-                    tokenJSON.parseCookie(it)
+                    RidiOAuth2.run {
+                        tokenJSON.parseCookie(it)
+                    }
                 }
                 if (tokenJSON.isNull(COOKIE_RIDI_AT).not() && tokenJSON.isNull(COOKIE_RIDI_RT).not()) {
                     tokenJSON.toString().saveToFile(RidiOAuth2.tokenFile)

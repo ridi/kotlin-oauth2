@@ -25,15 +25,15 @@ class RidiOAuth2 {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io/"
         private const val REAL_HOST = "account.ridibooks.com/"
+        internal var BASE_URL = "https://$REAL_HOST"
+
         internal const val STATUS_CODE_REDIRECT = 302
         internal const val COOKIE_RIDI_AT = "ridi-at"
         internal const val COOKIE_RIDI_RT = "ridi-rt"
 
-        internal var BASE_URL = "https://$REAL_HOST"
-
-        var instance = RidiOAuth2()
-
         internal lateinit var tokenFile: File
+
+        internal var cookies = HashSet<String>()
         internal fun JSONObject.parseCookie(cookieString: String) {
             val cookie = cookieString.split("=", ";")
             if (cookie[0] == COOKIE_RIDI_AT || cookie[0] == COOKIE_RIDI_RT) {
@@ -53,8 +53,8 @@ class RidiOAuth2 {
     }
 
     fun setSessionId(sessionId: String) {
-        manager.cookies = HashSet()
-        manager.cookies.add("PHPSESSID=$sessionId;")
+        cookies = HashSet()
+        cookies.add("PHPSESSID=$sessionId;")
     }
 
     fun setClientId(clientId: String) {

@@ -21,6 +21,7 @@ import java.security.InvalidParameterException
 class RidiOAuth2Test {
     private lateinit var mockWebServer: MockWebServer
     private lateinit var context: Context
+    private var ridiOAuth2 = RidiOAuth2()
 
     companion object {
         private const val VALID_SESSION_ID = "1"
@@ -68,11 +69,11 @@ class RidiOAuth2Test {
 
     @Test
     fun needClientId() {
-        RidiOAuth2.instance.setClientId("")
-        RidiOAuth2.instance.setSessionId(VALID_SESSION_ID)
-        RidiOAuth2.instance.createTokenFileFromPath(tokenFilePath)
+        ridiOAuth2.setClientId("")
+        ridiOAuth2.setSessionId(VALID_SESSION_ID)
+        ridiOAuth2.createTokenFileFromPath(tokenFilePath)
         try {
-            RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, IllegalStateException::class)
             return
@@ -82,11 +83,11 @@ class RidiOAuth2Test {
 
     @Test
     fun needTokenFilePath() {
-        RidiOAuth2.instance.setClientId(CLIENT_ID)
-        RidiOAuth2.instance.setSessionId(VALID_SESSION_ID)
-        RidiOAuth2.instance.createTokenFileFromPath("")
+        ridiOAuth2.setClientId(CLIENT_ID)
+        ridiOAuth2.setSessionId(VALID_SESSION_ID)
+        ridiOAuth2.createTokenFileFromPath("")
         try {
-            RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, RuntimeException::class)
             return
@@ -96,12 +97,12 @@ class RidiOAuth2Test {
 
     @Test
     fun returnLoginURL() {
-        RidiOAuth2.instance.setClientId(CLIENT_ID)
-        RidiOAuth2.instance.setSessionId(INVALID_SESSION_ID)
-        RidiOAuth2.instance.createTokenFileFromPath(tokenFilePath)
+        ridiOAuth2.setClientId(CLIENT_ID)
+        ridiOAuth2.setSessionId(INVALID_SESSION_ID)
+        ridiOAuth2.createTokenFileFromPath(tokenFilePath)
 
         try {
-            RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: InvalidParameterException) {
             assertEquals(e::class, InvalidParameterException::class)
             assertEquals(e.message, "200")
@@ -112,11 +113,11 @@ class RidiOAuth2Test {
 
     @Test
     fun workProperly() {
-        RidiOAuth2.instance.setClientId(CLIENT_ID)
-        RidiOAuth2.instance.setSessionId(VALID_SESSION_ID)
-        RidiOAuth2.instance.createTokenFileFromPath(tokenFilePath)
+        ridiOAuth2.setClientId(CLIENT_ID)
+        ridiOAuth2.setSessionId(VALID_SESSION_ID)
+        ridiOAuth2.createTokenFileFromPath(tokenFilePath)
         try {
-            RidiOAuth2.instance.getOAuthToken(APP_AUTHORIZED).blockingForEach {
+            ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingForEach {
                 assertEquals(it.subject, "AndroidKim")
             }
         } catch (e: Exception) {
