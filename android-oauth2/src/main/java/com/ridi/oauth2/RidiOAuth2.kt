@@ -3,6 +3,7 @@ package com.ridi.oauth2
 import android.util.Base64
 import com.ridi.books.helper.io.loadObject
 import io.reactivex.Observable
+import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.android.schedulers.AndroidSchedulers
 import okhttp3.ResponseBody
@@ -101,48 +102,56 @@ class RidiOAuth2 {
                 emitter.onError(IllegalStateException())
                 emitter.onComplete()
             } else if (tokenFile!!.exists().not()) {
-                manager.service.requestAuthorization(clientId!!, "code", redirectUri)
-                    .enqueue(object : Callback<ResponseBody> {
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                            emitter.onError(t)
-                            emitter.onComplete()
-                        }
-
-                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                            if (response.code() == STATUS_CODE_REDIRECT) {
-                                val redirectLocation = response.headers().values("Location")[0]
-                                if (redirectLocation == redirectUri) {
-                                    // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
-                                    getAccessToken()
-                                    emitter.onNext(parsedAccessToken)
-                                } else {
-                                    emitter.onError(MalformedURLException())
-                                }
-                            } else {
-                                emitter.onError(InvalidParameterException("${response.code()}"))
-                            }
-                            emitter.onComplete()
-                        }
-                    })
+                requestAuthorization(emitter, manager, redirectUri)
             } else {
                 if (isAccessTokenExpired()) {
-                    manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
-                        .enqueue(object : Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                                emitter.onError(IllegalStateException())
-                                emitter.onComplete()
-                            }
-
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                                emitter.onNext(parsedAccessToken)
-                                emitter.onComplete()
-                            }
-                        })
+                    refreshAccessToken(emitter, manager)
                 } else {
                     emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
                 }
             }
         }).subscribeOn(AndroidSchedulers.mainThread())
+    }
+
+    private fun requestAuthorization(emitter: ObservableEmitter<JWT>, manager: ApiManager, redirectUri: String) {
+        manager.service.requestAuthorization(clientId!!, "code", redirectUri)
+            .enqueue(object : Callback<ResponseBody> {
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    emitter.onError(t)
+                    emitter.onComplete()
+                }
+
+                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    if (response.code() == STATUS_CODE_REDIRECT) {
+                        val redirectLocation = response.headers().values("Location")[0]
+                        if (redirectLocation == redirectUri) {
+                            // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
+                            getAccessToken()
+                            emitter.onNext(parsedAccessToken)
+                        } else {
+                            emitter.onError(MalformedURLException())
+                        }
+                    } else {
+                        emitter.onError(InvalidParameterException("${response.code()}"))
+                    }
+                    emitter.onComplete()
+                }
+            })
+    }
+
+    private fun refreshAccessToken(emitter: ObservableEmitter<JWT>, manager: ApiManager) {
+        return manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
+            .enqueue(object : Callback<ResponseBody> {
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
+                    emitter.onError(IllegalStateException())
+                    emitter.onComplete()
+                }
+
+                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    emitter.onNext(parsedAccessToken)
+                    emitter.onComplete()
+                }
+            })
     }
 }
