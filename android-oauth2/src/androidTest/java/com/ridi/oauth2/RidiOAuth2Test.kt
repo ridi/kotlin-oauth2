@@ -2,6 +2,9 @@ package com.ridi.oauth2
 
 import android.content.Context
 import android.support.test.InstrumentationRegistry
+import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_AT
+import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_RT
+import com.ridi.oauth2.RidiOAuth2.Companion.STATUS_CODE_REDIRECT
 import junit.framework.Assert.assertEquals
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -53,12 +56,12 @@ class RidiOAuth2Test {
             return if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
                 MockResponse().setResponseCode(200)
             } else {
-                val atCookies = "ridi-at=$RIDI_AT;"
-                val rtCookies = "ridi-rt=$RIDI_RT;"
+                val atCookies = "$COOKIE_RIDI_AT=$RIDI_AT;"
+                val rtCookies = "$COOKIE_RIDI_RT=$RIDI_RT;"
                 MockResponse().setHeader("Location", APP_AUTHORIZED)
                     .setHeader("Set-Cookie", atCookies)
                     .addHeader("Set-Cookie", rtCookies)
-                    .setResponseCode(302)
+                    .setResponseCode(STATUS_CODE_REDIRECT)
             }
         }
     }
@@ -126,13 +129,13 @@ class RidiOAuth2Test {
     fun checkCookieParsing() {
         RidiOAuth2.run {
             val jsonObject = JSONObject()
-            jsonObject.parseCookie("ridi-rt=$RIDI_RT; Domain=; " +
+            jsonObject.parseCookie("$COOKIE_RIDI_RT=$RIDI_RT; Domain=; " +
                 "expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; Max-Age=2592000; Path=/; Secure")
-            assertEquals(jsonObject.getString("ridi-rt"), RIDI_RT)
+            assertEquals(jsonObject.getString(COOKIE_RIDI_RT), RIDI_RT)
             jsonObject.parseCookie(
-                "ridi-at=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; Max-Age=3600;" +
-                    " Path=/; Secure")
-            assertEquals(jsonObject.getString("ridi-at"), RIDI_AT)
+                "$COOKIE_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
+                    "Max-Age=3600; Path=/; Settings.Secure")
+            assertEquals(jsonObject.getString(COOKIE_RIDI_AT), RIDI_AT)
         }
     }
 

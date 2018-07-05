@@ -25,6 +25,10 @@ class RidiOAuth2 {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io/"
         private const val REAL_HOST = "account.ridibooks.com/"
+        internal const val STATUS_CODE_REDIRECT = 302
+        internal const val COOKIE_RIDI_AT = "ridi-at"
+        internal const val COOKIE_RIDI_RT = "ridi-rt"
+
         internal var BASE_URL = "https://$REAL_HOST"
 
         var instance = RidiOAuth2()
@@ -32,7 +36,7 @@ class RidiOAuth2 {
         internal lateinit var tokenFile: File
         internal fun JSONObject.parseCookie(cookieString: String) {
             val cookie = cookieString.split("=", ";")
-            if (cookie[0] == "ridi-at" || cookie[0] == "ridi-rt") {
+            if (cookie[0] == COOKIE_RIDI_AT || cookie[0] == COOKIE_RIDI_RT) {
                 put(cookie[0], cookie[1])
             }
         }
@@ -67,8 +71,8 @@ class RidiOAuth2 {
     fun getAccessToken(): String {
         if (rawAccessToken.isEmpty()) {
             val jsonObject = JSONObject(readJSONFile())
-            if (jsonObject.has("ridi-at")) {
-                rawAccessToken = jsonObject.getString("ridi-at")
+            if (jsonObject.has(COOKIE_RIDI_AT)) {
+                rawAccessToken = jsonObject.getString(COOKIE_RIDI_AT)
             }
         }
         parsedAccessToken = parseAccessToken()
@@ -87,8 +91,8 @@ class RidiOAuth2 {
     fun getRefreshToken(): String {
         if (refreshToken.isEmpty()) {
             val jsonObject = JSONObject(readJSONFile())
-            if (jsonObject.has("ridi-rt")) {
-                refreshToken = jsonObject.getString("ridi-rt")
+            if (jsonObject.has(COOKIE_RIDI_RT)) {
+                refreshToken = jsonObject.getString(COOKIE_RIDI_RT)
             }
         }
         return refreshToken
@@ -122,7 +126,7 @@ class RidiOAuth2 {
                             }
 
                             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                                if (response.code() == 302) {
+                                if (response.code() == STATUS_CODE_REDIRECT) {
                                     val redirectLocation = response.headers().values("Location")[0]
                                     if (redirectLocation == redirectUri) {
                                         // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.

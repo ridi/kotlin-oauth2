@@ -2,6 +2,8 @@ package com.ridi.oauth2
 
 import com.ridi.books.helper.io.saveToFile
 import com.ridi.oauth2.RidiOAuth2.Companion.BASE_URL
+import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_AT
+import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_RT
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -45,7 +47,7 @@ internal interface ApiManager {
         var cookies = HashSet<String>()
         private fun JSONObject.parseCookie(cookieString: String) {
             val cookie = cookieString.split("=", ";")
-            if (cookie[0] == "ridi-at" || cookie[0] == "ridi-rt") {
+            if (cookie[0] == COOKIE_RIDI_AT || cookie[0] == COOKIE_RIDI_RT) {
                 put(cookie[0], cookie[1])
             }
         }
@@ -72,7 +74,7 @@ internal interface ApiManager {
                     cookies.add(it)
                     tokenJSON.parseCookie(it)
                 }
-                if (tokenJSON.isNull("ridi-at").not() && tokenJSON.isNull("ridi-rt").not()) {
+                if (tokenJSON.isNull(COOKIE_RIDI_AT).not() && tokenJSON.isNull(COOKIE_RIDI_RT).not()) {
                     tokenJSON.toString().saveToFile(RidiOAuth2.tokenFile)
                 }
             }
