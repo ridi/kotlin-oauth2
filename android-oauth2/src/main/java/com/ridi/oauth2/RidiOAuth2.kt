@@ -93,48 +93,39 @@ class RidiOAuth2 {
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
         val manager = ApiManager()
         manager.cookieInterceptor.tokenFile = tokenFile
-        if (tokenFile == null) {
-            return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
+        return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
+            if (tokenFile == null) {
                 emitter.onError(FileNotFoundException())
                 emitter.onComplete()
-            }).subscribeOn(AndroidSchedulers.mainThread())
-        }
-        if (tokenFile!!.exists().not()) {
-            return if (clientId == null) {
-                Observable.create(ObservableOnSubscribe<JWT> { emitter ->
-                    emitter.onError(IllegalStateException())
-                    emitter.onComplete()
-                }).subscribeOn(AndroidSchedulers.mainThread())
-            } else {
-                Observable.create(ObservableOnSubscribe<JWT> { emitter ->
-                    manager.service.requestAuthorization(clientId!!, "code", redirectUri)
-                        .enqueue(object : Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                emitter.onError(t)
-                                emitter.onComplete()
-                            }
+            } else if (clientId == null) {
+                emitter.onError(IllegalStateException())
+                emitter.onComplete()
+            } else if (tokenFile!!.exists().not()) {
+                manager.service.requestAuthorization(clientId!!, "code", redirectUri)
+                    .enqueue(object : Callback<ResponseBody> {
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            emitter.onError(t)
+                            emitter.onComplete()
+                        }
 
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                                if (response.code() == STATUS_CODE_REDIRECT) {
-                                    val redirectLocation = response.headers().values("Location")[0]
-                                    if (redirectLocation == redirectUri) {
-                                        // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
-                                        getAccessToken()
-                                        emitter.onNext(parsedAccessToken)
-                                    } else {
-                                        emitter.onError(MalformedURLException())
-                                    }
+                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            if (response.code() == STATUS_CODE_REDIRECT) {
+                                val redirectLocation = response.headers().values("Location")[0]
+                                if (redirectLocation == redirectUri) {
+                                    // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
+                                    getAccessToken()
+                                    emitter.onNext(parsedAccessToken)
                                 } else {
-                                    emitter.onError(InvalidParameterException("${response.code()}"))
+                                    emitter.onError(MalformedURLException())
                                 }
-                                emitter.onComplete()
+                            } else {
+                                emitter.onError(InvalidParameterException("${response.code()}"))
                             }
-                        })
-                }).subscribeOn(AndroidSchedulers.mainThread())
-            }
-        } else {
-            return if (isAccessTokenExpired()) {
-                Observable.create(ObservableOnSubscribe<JWT> { emitter ->
+                            emitter.onComplete()
+                        }
+                    })
+            } else {
+                if (isAccessTokenExpired()) {
                     manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
@@ -147,11 +138,11 @@ class RidiOAuth2 {
                                 emitter.onComplete()
                             }
                         })
-                }).subscribeOn(AndroidSchedulers.mainThread())
-            } else {
-                Observable.just(parsedAccessToken!!)
-                    .subscribeOn(AndroidSchedulers.mainThread())
+                } else {
+                    emitter.onNext(parsedAccessToken!!)
+                    emitter.onComplete()
+                }
             }
-        }
+        }).subscribeOn(AndroidSchedulers.mainThread())
     }
 }
