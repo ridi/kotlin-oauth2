@@ -19,9 +19,6 @@ import java.util.Calendar
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
 class RidiOAuth2 {
-    private var clientId = ""
-    private var manager = ApiManager
-
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io/"
         private const val REAL_HOST = "account.ridibooks.com/"
@@ -30,8 +27,6 @@ class RidiOAuth2 {
         internal const val STATUS_CODE_REDIRECT = 302
         internal const val COOKIE_RIDI_AT = "ridi-at"
         internal const val COOKIE_RIDI_RT = "ridi-rt"
-
-        internal lateinit var tokenFile: File
 
         internal var cookies = HashSet<String>()
         internal fun JSONObject.parseCookie(cookieString: String) {
@@ -42,11 +37,12 @@ class RidiOAuth2 {
         }
     }
 
-    private var tokenFilePath = ""
+    var clientId: String? = null
+    var tokenFile: File? = null
 
-    private var refreshToken = ""
-    private var rawAccessToken = ""
-    private lateinit var parsedAccessToken: JWT
+    private var refreshToken: String? = null
+    private var rawAccessToken: String? = null
+    private var parsedAccessToken: JWT? = null
 
     fun setDevMode() {
         BASE_URL = "https://$DEV_HOST"
@@ -57,30 +53,21 @@ class RidiOAuth2 {
         cookies.add("PHPSESSID=$sessionId;")
     }
 
-    fun setClientId(clientId: String) {
-        this.clientId = clientId
-    }
-
-    fun createTokenFileFromPath(path: String) {
-        tokenFilePath = path
-        tokenFile = File(tokenFilePath)
-    }
-
-    private fun readJSONFile() = tokenFile.loadObject<String>() ?: throw FileNotFoundException()
+    private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
 
     fun getAccessToken(): String {
-        if (rawAccessToken.isEmpty()) {
+        if (rawAccessToken == null) {
             val jsonObject = JSONObject(readJSONFile())
             if (jsonObject.has(COOKIE_RIDI_AT)) {
                 rawAccessToken = jsonObject.getString(COOKIE_RIDI_AT)
             }
         }
         parsedAccessToken = parseAccessToken()
-        return rawAccessToken
+        return rawAccessToken!!
     }
 
     fun parseAccessToken(): JWT {
-        val splitString = rawAccessToken.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val splitString = rawAccessToken!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         // splitString[0]에는 필요한 정보가 없다.
         val jsonObject = JSONObject(String(Base64.decode(splitString[1], Base64.DEFAULT)))
         return JWT(jsonObject.getString("sub"),
@@ -89,36 +76,38 @@ class RidiOAuth2 {
     }
 
     fun getRefreshToken(): String {
-        if (refreshToken.isEmpty()) {
+        if (refreshToken == null) {
             val jsonObject = JSONObject(readJSONFile())
             if (jsonObject.has(COOKIE_RIDI_RT)) {
                 refreshToken = jsonObject.getString(COOKIE_RIDI_RT)
             }
         }
-        return refreshToken
+        return refreshToken!!
     }
 
     private fun isAccessTokenExpired(): Boolean {
         getAccessToken()
-        return parsedAccessToken.expiresAt < Calendar.getInstance().timeInMillis / 1000
+        return parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
     }
 
     fun getOAuthToken(redirectUri: String): Observable<JWT> {
-        if (tokenFilePath.isEmpty()) {
+        val manager = ApiManager()
+        manager.cookieInterceptor.tokenFile = tokenFile
+        if (tokenFile == null) {
             return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                 emitter.onError(FileNotFoundException())
                 emitter.onComplete()
             }).subscribeOn(AndroidSchedulers.mainThread())
         }
-        if (tokenFile.exists().not()) {
-            return if (clientId.isEmpty()) {
+        if (tokenFile!!.exists().not()) {
+            return if (clientId == null) {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
                     emitter.onError(IllegalStateException())
                     emitter.onComplete()
                 }).subscribeOn(AndroidSchedulers.mainThread())
             } else {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
-                    manager.create().requestAuthorization(clientId, "code", redirectUri)
+                    manager.service.requestAuthorization(clientId!!, "code", redirectUri)
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 emitter.onError(t)
@@ -146,7 +135,7 @@ class RidiOAuth2 {
         } else {
             return if (isAccessTokenExpired()) {
                 Observable.create(ObservableOnSubscribe<JWT> { emitter ->
-                    manager.create().refreshAccessToken(getAccessToken(), getRefreshToken())
+                    manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
                         .enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                                 emitter.onError(IllegalStateException())
@@ -160,7 +149,7 @@ class RidiOAuth2 {
                         })
                 }).subscribeOn(AndroidSchedulers.mainThread())
             } else {
-                Observable.just(parsedAccessToken)
+                Observable.just(parsedAccessToken!!)
                     .subscribeOn(AndroidSchedulers.mainThread())
             }
         }

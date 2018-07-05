@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import com.ridi.oauth2.RidiOAuth2
+import java.io.File
 
 class MainActivity : Activity() {
     companion object {
@@ -24,9 +25,9 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.getAuthTokenButton).setOnClickListener {
             Thread().run {
                 ridiOAuth2.setDevMode()
-                ridiOAuth2.createTokenFileFromPath(applicationContext.filesDir.absolutePath +
+                ridiOAuth2.tokenFile = File(applicationContext.filesDir.absolutePath +
                     "/tokenJSON.json")
-                ridiOAuth2.setClientId("Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL")
+                ridiOAuth2.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
                 ridiOAuth2.getOAuthToken("app://authorized").subscribe({
                     Log.d(javaClass.name, "Received => $it")
                 }, {

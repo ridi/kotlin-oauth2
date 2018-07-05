@@ -23,18 +23,16 @@ class RidiOAuth2Test {
     private lateinit var context: Context
     private var ridiOAuth2 = RidiOAuth2()
 
-    companion object {
-        private const val VALID_SESSION_ID = "1"
-        private const val INVALID_SESSION_ID = "2"
-        private const val CLIENT_ID = "3"
-        private const val APP_AUTHORIZED = "app://authorized"
-        private const val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
-            "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
-            "zVWlIMWtnTCIsInNjb3BlIjoiYWxsIn0.KP_jrSc1KZ36-TYf-oiTyMl2Zn-dm9C8x-eY0bV0uQ8"
-        private const val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
-    }
+    private val VALID_SESSION_ID = "1"
+    private val INVALID_SESSION_ID = "2"
+    private val CLIENT_ID = "3"
+    private val APP_AUTHORIZED = "app://authorized"
+    private val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
+        "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
+        "zVWlIMWtnTCIsInNjb3BlIjoiYWxsIn0.KP_jrSc1KZ36-TYf-oiTyMl2Zn-dm9C8x-eY0bV0uQ8"
+    private val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
 
-    private var tokenFilePath = ""
+    private var tokenFile: File? = null
 
     @Before
     fun setUp() {
@@ -42,11 +40,11 @@ class RidiOAuth2Test {
         mockWebServer.start()
         RidiOAuth2.BASE_URL = mockWebServer.url("/").toString()
         mockWebServer.setDispatcher(dispatcher)
-        context = InstrumentationRegistry.getContext()
 
-        tokenFilePath = context.filesDir.absolutePath + "/tokenTest.json"
-        if (File(tokenFilePath).exists()) {
-            File(tokenFilePath).delete()
+        context = InstrumentationRegistry.getContext()
+        tokenFile = File(context.filesDir.absolutePath + "/tokenTest.json")
+        if (tokenFile!!.exists()) {
+            tokenFile!!.delete()
         }
     }
 
@@ -69,9 +67,9 @@ class RidiOAuth2Test {
 
     @Test
     fun needClientId() {
-        ridiOAuth2.setClientId("")
+        ridiOAuth2.clientId = null
         ridiOAuth2.setSessionId(VALID_SESSION_ID)
-        ridiOAuth2.createTokenFileFromPath(tokenFilePath)
+        ridiOAuth2.tokenFile = tokenFile
         try {
             ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
@@ -83,9 +81,9 @@ class RidiOAuth2Test {
 
     @Test
     fun needTokenFilePath() {
-        ridiOAuth2.setClientId(CLIENT_ID)
+        ridiOAuth2.clientId = CLIENT_ID
         ridiOAuth2.setSessionId(VALID_SESSION_ID)
-        ridiOAuth2.createTokenFileFromPath("")
+        ridiOAuth2.tokenFile = null
         try {
             ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
@@ -97,9 +95,9 @@ class RidiOAuth2Test {
 
     @Test
     fun returnLoginURL() {
-        ridiOAuth2.setClientId(CLIENT_ID)
+        ridiOAuth2.clientId = CLIENT_ID
         ridiOAuth2.setSessionId(INVALID_SESSION_ID)
-        ridiOAuth2.createTokenFileFromPath(tokenFilePath)
+        ridiOAuth2.tokenFile = tokenFile
 
         try {
             ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingSingle()
@@ -113,9 +111,9 @@ class RidiOAuth2Test {
 
     @Test
     fun workProperly() {
-        ridiOAuth2.setClientId(CLIENT_ID)
+        ridiOAuth2.clientId = CLIENT_ID
         ridiOAuth2.setSessionId(VALID_SESSION_ID)
-        ridiOAuth2.createTokenFileFromPath(tokenFilePath)
+        ridiOAuth2.tokenFile = tokenFile
         try {
             ridiOAuth2.getOAuthToken(APP_AUTHORIZED).blockingForEach {
                 assertEquals(it.subject, "AndroidKim")

@@ -17,38 +17,46 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
+import java.io.File
 
-internal interface ApiManager {
-    @GET("ridi/authorize")
-    fun requestAuthorization(
-        @Query("client_id") clientId: String,
-        @Query("response_type") responseType: String,
-        @Query("redirect_uri") redirectUri: String
-    ): Call<ResponseBody>
+class ApiManager {
+    private val retrofit: Retrofit
+    internal val cookieInterceptor = CookieInterceptor()
 
-    @POST("ridi/token")
-    fun refreshAccessToken(
-        @Header("Cookie") accessToken: String,
-        @Header("Cookie") refreshToken: String
-    ): Call<ResponseBody>
-
-    companion object Factory {
-        fun create(): ApiManager {
-            val client = OkHttpClient().newBuilder()
-                .addNetworkInterceptor(CookieInterceptor())
-                .build()
-            val retrofit = Retrofit.Builder()
-                .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(BASE_URL)
-                .client(client)
-                .build()
-            return retrofit.create(ApiManager::class.java)
-        }
+    init {
+        val client = OkHttpClient().newBuilder()
+            .addNetworkInterceptor(cookieInterceptor)
+            .build()
+        retrofit = Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(BASE_URL)
+            .client(client)
+            .build()
     }
 
-    private class CookieInterceptor : Interceptor {
+    private fun <T> createServiceLazy(service: Class<T>) = lazy { retrofit.create(service) }
+
+    internal val service: ApiService by createServiceLazy(ApiService::class.java)
+
+    internal interface ApiService {
+        @GET("ridi/authorize")
+        fun requestAuthorization(
+            @Query("client_id") clientId: String,
+            @Query("response_type") responseType: String,
+            @Query("redirect_uri") redirectUri: String
+        ): Call<ResponseBody>
+
+        @POST("ridi/token")
+        fun refreshAccessToken(
+            @Header("Cookie") accessToken: String,
+            @Header("Cookie") refreshToken: String
+        ): Call<ResponseBody>
+    }
+
+    internal class CookieInterceptor : Interceptor {
         private val USER_AGENT_FOR_OKHTTP =
             String(System.getProperty("http.agent").toCharArray().filter { it in ' '..'~' }.toCharArray())
+        var tokenFile: File? = null
 
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
@@ -69,8 +77,9 @@ internal interface ApiManager {
                         tokenJSON.parseCookie(it)
                     }
                 }
+
                 if (tokenJSON.isNull(COOKIE_RIDI_AT).not() && tokenJSON.isNull(COOKIE_RIDI_RT).not()) {
-                    tokenJSON.toString().saveToFile(RidiOAuth2.tokenFile)
+                    tokenJSON.toString().saveToFile(tokenFile!!)
                 }
             }
             return response
