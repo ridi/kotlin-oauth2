@@ -11,7 +11,7 @@ You should add jitpack maven repository to build.gradle file of your project.
 ```
 repositories {
     ...
-    maven { url "https://jitpack.io" }
+    maven { url 'https://jitpack.io' }
     ...
 }
 ```
@@ -21,7 +21,7 @@ Then you can include this library by adding dependency script to build.gradle fi
 ```
 dependencies {
     ...
-    compile 'com.github.ridi:android-oauth2:<version>'
+    implementation 'com.github.ridi:oauth2:<version>'
     ...
 }
 ```
