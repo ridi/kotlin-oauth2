@@ -16,6 +16,8 @@ import java.io.FileNotFoundException
 import java.net.MalformedURLException
 import java.security.InvalidParameterException
 import java.util.Calendar
+import kotlin.properties.ObservableProperty
+import kotlin.reflect.KProperty
 
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
@@ -38,8 +40,15 @@ class RidiOAuth2 {
         }
     }
 
+    lateinit var manager: ApiManager
+
     var clientId: String? = null
-    var tokenFile: File? = null
+    var tokenFile: File? by object : ObservableProperty<File?>(null) {
+        override fun afterChange(property: KProperty<*>, oldValue: File?, newValue: File?) {
+            manager = ApiManager()
+            manager.cookieInterceptor.tokenFile = newValue
+        }
+    }
 
     private var refreshToken: String? = null
     private var rawAccessToken: String? = null
@@ -113,8 +122,6 @@ class RidiOAuth2 {
     }
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
-        val manager = ApiManager()
-        manager.cookieInterceptor.tokenFile = tokenFile
         manager.service.requestAuthorization(clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
@@ -141,8 +148,6 @@ class RidiOAuth2 {
     }
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
-        val manager = ApiManager()
-        manager.cookieInterceptor.tokenFile = tokenFile
         return manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
