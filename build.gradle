@@ -29,7 +29,7 @@ subprojects {
 
     dependencies {
         ktlint 'com.github.shyiko:ktlint:0.24.0'
-        ktlint 'com.github.ridi:ktlint-ruleset:-SNAPSHOT'
+        ktlint 'com.github.ridi:ktlint-ruleset:master-SNAPSHOT'
     }
 
     task ktlint(type: JavaExec, group: "verification") {
