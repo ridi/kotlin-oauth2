@@ -43,7 +43,7 @@ class WebViewActivity : Activity() {
                     splitCookies.forEach { cookie ->
                         val keyValue = cookie.split("=")
                         if (keyValue[0] == "PHPSESSID") {
-                            ridiOAuth2.setSessionId(keyValue[1])
+                            ridiOAuth2.sessionId = keyValue[1]
                         }
                     }
                 }

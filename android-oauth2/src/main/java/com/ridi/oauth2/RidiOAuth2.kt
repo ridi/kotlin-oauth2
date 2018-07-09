@@ -13,11 +13,10 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.FileNotFoundException
+import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.security.InvalidParameterException
 import java.util.Calendar
-import kotlin.properties.ObservableProperty
-import kotlin.reflect.KProperty
 
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
@@ -27,54 +26,71 @@ class RidiOAuth2 {
         private const val REAL_HOST = "account.ridibooks.com/"
         internal var BASE_URL = "https://$REAL_HOST"
 
-        internal const val STATUS_CODE_REDIRECT = 302
-        internal const val COOKIE_RIDI_AT = "ridi-at"
-        internal const val COOKIE_RIDI_RT = "ridi-rt"
+        internal const val COOKIE_KEY_RIDI_AT = "ridi-at"
+        internal const val COOKIE_KEY_RIDI_RT = "ridi-rt"
 
-        internal var cookies = HashSet<String>()
         internal fun JSONObject.parseCookie(cookieString: String) {
             val cookie = cookieString.split("=", ";")
-            if (cookie[0] == COOKIE_RIDI_AT || cookie[0] == COOKIE_RIDI_RT) {
-                put(cookie[0], cookie[1])
+            val cookieKey = cookie[0]
+            val cookieValue = cookie[1]
+            if (cookieKey == COOKIE_KEY_RIDI_AT || cookieKey == COOKIE_KEY_RIDI_RT) {
+                put(cookieKey, cookieValue)
             }
         }
     }
 
-    lateinit var manager: ApiManager
+    private var manager = ApiManager()
 
     var clientId: String? = null
-    var tokenFile: File? by object : ObservableProperty<File?>(null) {
-        override fun afterChange(property: KProperty<*>, oldValue: File?, newValue: File?) {
-            manager = ApiManager()
-            manager.cookieInterceptor.tokenFile = newValue
+    var tokenFile: File? = null
+        set(value) {
+            field = value
+            manager.cookieInterceptor.tokenFile = value
         }
-    }
 
-    private var refreshToken: String? = null
-    private var rawAccessToken: String? = null
-    private var parsedAccessToken: JWT? = null
+    var useDevMode: Boolean = false
+        set(value) {
+            BASE_URL = "https://" + if (value) DEV_HOST else REAL_HOST
+        }
 
-    fun setDevMode() {
-        BASE_URL = "https://$DEV_HOST"
-    }
+    var sessionId: String? = null
+        set(value) {
+            field = value
+            createCookies(value!!)
+        }
 
-    fun setSessionId(sessionId: String) {
-        cookies = HashSet()
-        cookies.add("PHPSESSID=$sessionId;")
+    private fun createCookies(sessionId: String) {
+        manager.cookieInterceptor.cookies = HashSet()
+        manager.cookieInterceptor.cookies.add("PHPSESSID=$sessionId;")
     }
 
     private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
 
-    private fun getAccessToken(): String {
-        if (rawAccessToken == null) {
-            val jsonObject = JSONObject(readJSONFile())
-            if (jsonObject.has(COOKIE_RIDI_AT)) {
-                rawAccessToken = jsonObject.getString(COOKIE_RIDI_AT)
+    private fun getTokenJSON() = JSONObject(readJSONFile())
+
+    private var rawAccessToken: String? = null
+        get() {
+            if (field == null) {
+                field = getTokenJSON().getString(COOKIE_KEY_RIDI_AT)
             }
+            return field
         }
-        parsedAccessToken = parseAccessToken()
-        return rawAccessToken!!
-    }
+
+    private var refreshToken: String? = null
+        get() {
+            if (field == null) {
+                field = getTokenJSON().getString(COOKIE_KEY_RIDI_RT)
+            }
+            return field
+        }
+
+    private var parsedAccessToken: JWT? = null
+        get() {
+            if (field == null) {
+                field = parseAccessToken()
+            }
+            return field
+        }
 
     private fun parseAccessToken(): JWT {
         val splitString = rawAccessToken!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -85,27 +101,12 @@ class RidiOAuth2 {
             jsonObject.getInt("exp"))
     }
 
-    private fun getRefreshToken(): String {
-        if (refreshToken == null) {
-            val jsonObject = JSONObject(readJSONFile())
-            if (jsonObject.has(COOKIE_RIDI_RT)) {
-                refreshToken = jsonObject.getString(COOKIE_RIDI_RT)
-            }
-        }
-        return refreshToken!!
-    }
+    private fun isAccessTokenExpired(): Boolean =
+        parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
 
-    private fun isAccessTokenExpired(): Boolean {
-        getAccessToken()
-        return parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
-    }
-
-    fun getJWT(redirectUri: String): Observable<JWT> {
+    fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
-            if (tokenFile == null) {
-                emitter.onError(FileNotFoundException())
-                emitter.onComplete()
-            } else if (clientId == null) {
+            if (tokenFile == null || clientId == null) {
                 emitter.onError(IllegalStateException())
                 emitter.onComplete()
             } else if (tokenFile!!.exists().not()) {
@@ -122,7 +123,7 @@ class RidiOAuth2 {
     }
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
-        manager.service.requestAuthorization(clientId!!, "code", redirectUri)
+        manager.service!!.requestAuthorization(clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     emitter.onError(t)
@@ -130,11 +131,10 @@ class RidiOAuth2 {
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if (response.code() == STATUS_CODE_REDIRECT) {
+                    if (response.code() == HttpURLConnection.HTTP_MOVED_TEMP) {
                         val redirectLocation = response.headers().values("Location")[0]
                         if (redirectLocation == redirectUri) {
                             // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
-                            getAccessToken()
                             emitter.onNext(parsedAccessToken)
                         } else {
                             emitter.onError(MalformedURLException())
@@ -148,7 +148,7 @@ class RidiOAuth2 {
     }
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
-        return manager.service.refreshAccessToken(getAccessToken(), getRefreshToken())
+        return manager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     emitter.onError(IllegalStateException())

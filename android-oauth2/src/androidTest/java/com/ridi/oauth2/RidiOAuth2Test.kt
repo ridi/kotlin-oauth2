@@ -2,9 +2,8 @@ package com.ridi.oauth2
 
 import android.content.Context
 import android.support.test.InstrumentationRegistry
-import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_AT
-import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_RIDI_RT
-import com.ridi.oauth2.RidiOAuth2.Companion.STATUS_CODE_REDIRECT
+import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_KEY_RIDI_AT
+import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_KEY_RIDI_RT
 import junit.framework.Assert.assertEquals
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -16,12 +15,12 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.net.HttpURLConnection
 import java.security.InvalidParameterException
 
 class RidiOAuth2Test {
     private lateinit var mockWebServer: MockWebServer
     private lateinit var context: Context
-    private var ridiOAuth2 = RidiOAuth2()
 
     companion object {
         private const val VALID_SESSION_ID = "1"
@@ -35,6 +34,7 @@ class RidiOAuth2Test {
     }
 
     private var tokenFile: File? = null
+    private lateinit var ridiOAuth2: RidiOAuth2
 
     @Before
     fun setUp() {
@@ -48,6 +48,7 @@ class RidiOAuth2Test {
         if (tokenFile!!.exists()) {
             tokenFile!!.delete()
         }
+        ridiOAuth2 = RidiOAuth2()
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
@@ -57,12 +58,12 @@ class RidiOAuth2Test {
             return if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
                 MockResponse().setResponseCode(200)
             } else {
-                val atCookies = "$COOKIE_RIDI_AT=$RIDI_AT;"
-                val rtCookies = "$COOKIE_RIDI_RT=$RIDI_RT;"
+                val atCookies = "$COOKIE_KEY_RIDI_AT=$RIDI_AT;"
+                val rtCookies = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
                 MockResponse().setHeader("Location", APP_AUTHORIZED)
                     .setHeader("Set-Cookie", atCookies)
                     .addHeader("Set-Cookie", rtCookies)
-                    .setResponseCode(STATUS_CODE_REDIRECT)
+                    .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
             }
         }
     }
@@ -70,10 +71,10 @@ class RidiOAuth2Test {
     @Test
     fun needClientId() {
         ridiOAuth2.clientId = null
-        ridiOAuth2.setSessionId(VALID_SESSION_ID)
+        ridiOAuth2.sessionId = VALID_SESSION_ID
         ridiOAuth2.tokenFile = tokenFile
         try {
-            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, IllegalStateException::class)
             return
@@ -82,14 +83,14 @@ class RidiOAuth2Test {
     }
 
     @Test
-    fun needTokenFilePath() {
+    fun needTokenFile() {
         ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.setSessionId(VALID_SESSION_ID)
         ridiOAuth2.tokenFile = null
+        ridiOAuth2.sessionId = VALID_SESSION_ID
         try {
-            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
-            assertEquals(e::class, RuntimeException::class)
+            assertEquals(e::class, IllegalStateException::class)
             return
         }
         fail()
@@ -98,14 +99,13 @@ class RidiOAuth2Test {
     @Test
     fun returnLoginURL() {
         ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.setSessionId(INVALID_SESSION_ID)
         ridiOAuth2.tokenFile = tokenFile
-
+        ridiOAuth2.sessionId = INVALID_SESSION_ID
         try {
-            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingSingle()
+            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: InvalidParameterException) {
             assertEquals(e::class, InvalidParameterException::class)
-            assertEquals(e.message, "200")
+            assertEquals(e.message, "${HttpURLConnection.HTTP_OK}")
             return
         }
         fail()
@@ -114,10 +114,10 @@ class RidiOAuth2Test {
     @Test
     fun workProperly() {
         ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.setSessionId(VALID_SESSION_ID)
+        ridiOAuth2.sessionId = VALID_SESSION_ID
         ridiOAuth2.tokenFile = tokenFile
         try {
-            ridiOAuth2.getJWT(APP_AUTHORIZED).blockingForEach {
+            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingForEach {
                 assertEquals(it.subject, "AndroidKim")
             }
         } catch (e: Exception) {
@@ -130,13 +130,13 @@ class RidiOAuth2Test {
     fun checkCookieParsing() {
         RidiOAuth2.run {
             val jsonObject = JSONObject()
-            jsonObject.parseCookie("$COOKIE_RIDI_RT=$RIDI_RT; Domain=; " +
+            jsonObject.parseCookie("$COOKIE_KEY_RIDI_RT=$RIDI_RT; Domain=; " +
                 "expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; Max-Age=2592000; Path=/; Secure")
-            assertEquals(jsonObject.getString(COOKIE_RIDI_RT), RIDI_RT)
+            assertEquals(jsonObject.getString(COOKIE_KEY_RIDI_RT), RIDI_RT)
             jsonObject.parseCookie(
-                "$COOKIE_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
+                "$COOKIE_KEY_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
                     "Max-Age=3600; Path=/; Settings.Secure")
-            assertEquals(jsonObject.getString(COOKIE_RIDI_AT), RIDI_AT)
+            assertEquals(jsonObject.getString(COOKIE_KEY_RIDI_AT), RIDI_AT)
         }
     }
 

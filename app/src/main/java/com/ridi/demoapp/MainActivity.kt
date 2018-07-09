@@ -24,11 +24,11 @@ class MainActivity : Activity() {
 
         findViewById<Button>(R.id.getAuthTokenButton).setOnClickListener {
             Thread().run {
-                ridiOAuth2.setDevMode()
+                ridiOAuth2.useDevMode = true
                 ridiOAuth2.tokenFile = File(applicationContext.filesDir.absolutePath +
                     "/tokenJSON.json")
                 ridiOAuth2.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
-                ridiOAuth2.getJWT("app://authorized").subscribe({
+                ridiOAuth2.getAccessToken("app://authorized").subscribe({
                     Log.d(javaClass.name, "Received => $it")
                 }, {
                     Log.e(javaClass.name, "Error => $it")
