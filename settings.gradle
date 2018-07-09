@@ -1,1 +1,1 @@
-include ':demoapp', ':android-oauth2'
+include ':app', ':android-oauth2'
