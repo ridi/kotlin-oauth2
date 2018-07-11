@@ -17,12 +17,12 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        findViewById<Button>(R.id.loginButton).setOnClickListener {
+        findViewById<Button>(R.id.login_button).setOnClickListener {
             val intent = Intent(this, WebViewActivity::class.java)
             startActivity(intent)
         }
 
-        findViewById<Button>(R.id.getAuthTokenButton).setOnClickListener {
+        findViewById<Button>(R.id.access_token_button).setOnClickListener {
             Thread().run {
                 ridiOAuth2.useDevMode = true
                 ridiOAuth2.tokenFile = File(applicationContext.filesDir.absolutePath +

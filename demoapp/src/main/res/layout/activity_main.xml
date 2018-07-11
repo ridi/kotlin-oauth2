@@ -8,16 +8,16 @@
     tools:context="com.ridi.demoapp.MainActivity">
 
     <Button
-        android:id="@+id/loginButton"
+        android:id="@+id/login_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="로그인" />
 
     <Button
-        android:id="@+id/getAuthTokenButton"
+        android:id="@+id/access_token_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
-        android:text="AuthToken 가져오기" />
+        android:text="AccessToken 가져오기" />
 
 </LinearLayout>
