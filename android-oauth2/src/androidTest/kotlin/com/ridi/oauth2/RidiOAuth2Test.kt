@@ -71,7 +71,7 @@ class RidiOAuth2Test {
     @Test
     fun needClientId() {
         ridiOAuth2.clientId = null
-        ridiOAuth2.sessionId = VALID_SESSION_ID
+        ridiOAuth2.setSessionId(VALID_SESSION_ID)
         ridiOAuth2.tokenFile = tokenFile
         try {
             ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
@@ -86,7 +86,7 @@ class RidiOAuth2Test {
     fun needTokenFile() {
         ridiOAuth2.clientId = CLIENT_ID
         ridiOAuth2.tokenFile = null
-        ridiOAuth2.sessionId = VALID_SESSION_ID
+        ridiOAuth2.setSessionId(VALID_SESSION_ID)
         try {
             ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
@@ -100,7 +100,7 @@ class RidiOAuth2Test {
     fun returnLoginURL() {
         ridiOAuth2.clientId = CLIENT_ID
         ridiOAuth2.tokenFile = tokenFile
-        ridiOAuth2.sessionId = INVALID_SESSION_ID
+        ridiOAuth2.setSessionId(INVALID_SESSION_ID)
         try {
             ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: InvalidParameterException) {
@@ -114,7 +114,7 @@ class RidiOAuth2Test {
     @Test
     fun workProperly() {
         ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.sessionId = VALID_SESSION_ID
+        ridiOAuth2.setSessionId(VALID_SESSION_ID)
         ridiOAuth2.tokenFile = tokenFile
         try {
             ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingForEach {

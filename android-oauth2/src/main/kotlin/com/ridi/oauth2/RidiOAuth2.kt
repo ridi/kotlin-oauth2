@@ -53,15 +53,15 @@ class RidiOAuth2 {
             BASE_URL = "https://" + if (value) DEV_HOST else REAL_HOST
         }
 
-    var sessionId: String? = null
-        set(value) {
-            field = value
-            createCookies(value!!)
-        }
-
-    private fun createCookies(sessionId: String) {
+    fun setSessionId(sessionId: String) {
+        clearSavedTokens()
         manager.cookieInterceptor.cookies = HashSet()
         manager.cookieInterceptor.cookies.add("PHPSESSID=$sessionId;")
+    }
+
+    private fun clearSavedTokens() {
+        rawAccessToken = null
+        refreshToken = null
     }
 
     private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
@@ -148,6 +148,7 @@ class RidiOAuth2 {
     }
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
+        clearSavedTokens()
         return manager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
