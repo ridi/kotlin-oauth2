@@ -23,17 +23,15 @@ class MainActivity : Activity() {
         }
 
         findViewById<Button>(R.id.access_token_button).setOnClickListener {
-            Thread().run {
-                ridiOAuth2.useDevMode = true
-                ridiOAuth2.tokenFile = File(applicationContext.filesDir.absolutePath +
-                    "/tokenJSON.json")
-                ridiOAuth2.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
-                ridiOAuth2.getAccessToken("app://authorized").subscribe({
-                    Log.d(javaClass.name, "Received => $it")
-                }, {
-                    Log.e(javaClass.name, "Error => $it")
-                })
-            }
+            ridiOAuth2.useDevMode = true
+            ridiOAuth2.tokenFile = File(applicationContext.filesDir.absolutePath +
+                "/tokenJSON.json")
+            ridiOAuth2.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
+            ridiOAuth2.getAccessToken("app://authorized").subscribe({
+                Log.d(javaClass.name, "Received => $it")
+            }, {
+                Log.e(javaClass.name, "Error => $it")
+            })
         }
     }
 }
