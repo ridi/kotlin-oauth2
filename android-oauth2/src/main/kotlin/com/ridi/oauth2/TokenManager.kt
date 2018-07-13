@@ -20,7 +20,7 @@ import java.util.Calendar
 
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
-class RidiOAuth2 {
+class TokenManager {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io/"
         private const val REAL_HOST = "account.ridibooks.com/"
@@ -66,12 +66,12 @@ class RidiOAuth2 {
 
     private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
 
-    private fun getTokenJSON() = JSONObject(readJSONFile())
+    private fun getSavedJSON() = JSONObject(readJSONFile())
 
     private var rawAccessToken: String? = null
         get() {
             if (field == null) {
-                field = getTokenJSON().getString(COOKIE_KEY_RIDI_AT)
+                field = getSavedJSON().getString(COOKIE_KEY_RIDI_AT)
             }
             return field
         }
@@ -79,7 +79,7 @@ class RidiOAuth2 {
     private var refreshToken: String? = null
         get() {
             if (field == null) {
-                field = getTokenJSON().getString(COOKIE_KEY_RIDI_RT)
+                field = getSavedJSON().getString(COOKIE_KEY_RIDI_RT)
             }
             return field
         }

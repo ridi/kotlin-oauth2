@@ -24,12 +24,12 @@ class CookieInterceptor : Interceptor {
             val tokenJSON = JSONObject()
             cookieHeaders.forEach {
                 cookies.add(it)
-                RidiOAuth2.run {
+                TokenManager.run {
                     tokenJSON.parseCookie(it)
                 }
             }
 
-            if (tokenJSON.has(RidiOAuth2.COOKIE_KEY_RIDI_AT) && tokenJSON.has(RidiOAuth2.COOKIE_KEY_RIDI_RT)) {
+            if (tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_RT)) {
                 tokenJSON.toString().saveToFile(tokenFile!!)
             }
         }

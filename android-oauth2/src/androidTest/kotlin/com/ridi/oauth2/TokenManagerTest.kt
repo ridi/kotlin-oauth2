@@ -2,8 +2,8 @@ package com.ridi.oauth2
 
 import android.content.Context
 import android.support.test.InstrumentationRegistry
-import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_KEY_RIDI_AT
-import com.ridi.oauth2.RidiOAuth2.Companion.COOKIE_KEY_RIDI_RT
+import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_AT
+import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_RT
 import junit.framework.Assert.assertEquals
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -18,7 +18,7 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.security.InvalidParameterException
 
-class RidiOAuth2Test {
+class TokenManagerTest {
     private lateinit var mockWebServer: MockWebServer
     private lateinit var context: Context
 
@@ -34,13 +34,13 @@ class RidiOAuth2Test {
     }
 
     private var tokenFile: File? = null
-    private lateinit var ridiOAuth2: RidiOAuth2
+    private lateinit var tokenManager: TokenManager
 
     @Before
     fun setUp() {
         mockWebServer = MockWebServer()
         mockWebServer.start()
-        RidiOAuth2.BASE_URL = mockWebServer.url("/").toString()
+        TokenManager.BASE_URL = mockWebServer.url("/").toString()
         mockWebServer.setDispatcher(dispatcher)
 
         context = InstrumentationRegistry.getContext()
@@ -48,7 +48,7 @@ class RidiOAuth2Test {
         if (tokenFile!!.exists()) {
             tokenFile!!.delete()
         }
-        ridiOAuth2 = RidiOAuth2()
+        tokenManager = TokenManager()
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
@@ -70,11 +70,11 @@ class RidiOAuth2Test {
 
     @Test
     fun needClientId() {
-        ridiOAuth2.clientId = null
-        ridiOAuth2.setSessionId(VALID_SESSION_ID)
-        ridiOAuth2.tokenFile = tokenFile
+        tokenManager.clientId = null
+        tokenManager.setSessionId(VALID_SESSION_ID)
+        tokenManager.tokenFile = tokenFile
         try {
-            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
+            tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, IllegalStateException::class)
             return
@@ -84,11 +84,11 @@ class RidiOAuth2Test {
 
     @Test
     fun needTokenFile() {
-        ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.tokenFile = null
-        ridiOAuth2.setSessionId(VALID_SESSION_ID)
+        tokenManager.clientId = CLIENT_ID
+        tokenManager.tokenFile = null
+        tokenManager.setSessionId(VALID_SESSION_ID)
         try {
-            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
+            tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: Exception) {
             assertEquals(e::class, IllegalStateException::class)
             return
@@ -98,11 +98,11 @@ class RidiOAuth2Test {
 
     @Test
     fun returnLoginURL() {
-        ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.tokenFile = tokenFile
-        ridiOAuth2.setSessionId(INVALID_SESSION_ID)
+        tokenManager.clientId = CLIENT_ID
+        tokenManager.tokenFile = tokenFile
+        tokenManager.setSessionId(INVALID_SESSION_ID)
         try {
-            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingSingle()
+            tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: InvalidParameterException) {
             assertEquals(e::class, InvalidParameterException::class)
             assertEquals(e.message, "${HttpURLConnection.HTTP_OK}")
@@ -113,11 +113,11 @@ class RidiOAuth2Test {
 
     @Test
     fun workProperly() {
-        ridiOAuth2.clientId = CLIENT_ID
-        ridiOAuth2.setSessionId(VALID_SESSION_ID)
-        ridiOAuth2.tokenFile = tokenFile
+        tokenManager.clientId = CLIENT_ID
+        tokenManager.setSessionId(VALID_SESSION_ID)
+        tokenManager.tokenFile = tokenFile
         try {
-            ridiOAuth2.getAccessToken(APP_AUTHORIZED).blockingForEach {
+            tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
                 assertEquals(it.subject, "AndroidKim")
             }
         } catch (e: Exception) {
@@ -128,7 +128,7 @@ class RidiOAuth2Test {
 
     @Test
     fun checkCookieParsing() {
-        RidiOAuth2.run {
+        TokenManager.run {
             val jsonObject = JSONObject()
             jsonObject.parseCookie("$COOKIE_KEY_RIDI_RT=$RIDI_RT; Domain=; " +
                 "expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; Max-Age=2592000; Path=/; Secure")

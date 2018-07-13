@@ -8,7 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.ridi.demoapp.MainActivity.Companion.ridiOAuth2
+import com.ridi.demoapp.MainActivity.Companion.tokenManager
 
 class WebViewActivity : Activity() {
 
@@ -43,7 +43,7 @@ class WebViewActivity : Activity() {
                     splitCookies.forEach { cookie ->
                         val keyValue = cookie.split("=")
                         if (keyValue[0] == "PHPSESSID") {
-                            ridiOAuth2.setSessionId(keyValue[1])
+                            tokenManager.setSessionId(keyValue[1])
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 package com.ridi.oauth2
 
-import com.ridi.oauth2.RidiOAuth2.Companion.BASE_URL
+import com.ridi.oauth2.TokenManager.Companion.BASE_URL
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Call
