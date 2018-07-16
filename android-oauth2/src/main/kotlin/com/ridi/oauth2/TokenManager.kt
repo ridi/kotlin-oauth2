@@ -149,7 +149,7 @@ class TokenManager {
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
         clearSavedTokens()
-        return manager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
+        manager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     emitter.onError(IllegalStateException())
