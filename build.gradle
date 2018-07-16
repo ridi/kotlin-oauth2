@@ -2,7 +2,7 @@
 
 buildscript {
     ext.kotlin_version = '1.2.51'
-    group = 'com.github.ridisanghoon'
+    group = 'com.github.ridi'
     repositories {
         google()
         jcenter()
