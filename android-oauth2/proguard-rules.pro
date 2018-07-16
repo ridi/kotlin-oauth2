@@ -21,3 +21,24 @@
 #-renamesourcefileattribute SourceFile
 
 -dontwarn com.ridi.oauth2.**
+
+-dontwarn kotlin.**
+-dontwarn org.apache.**
+-dontwarn okio.**
+-keepnames class rx.Observable
+
+# Retrofit 2.X
+## https://square.github.io/retrofit/ ##
+
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keepattributes Signature
+-keepattributes Exceptions
+
+# OkHttp
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
+
