@@ -22,10 +22,10 @@ class CookieInterceptor : Interceptor {
         val cookieHeaders = response.headers().values("Set-Cookie")
         if (cookieHeaders.isNotEmpty()) {
             val tokenJSON = JSONObject()
-            cookieHeaders.forEach {
-                cookies.add(it)
+            cookieHeaders.forEach { cookieHeader ->
+                cookies.add(cookieHeader)
                 TokenManager.run {
-                    tokenJSON.parseCookie(it)
+                    tokenJSON.parseCookie(cookieHeader)
                 }
             }
 

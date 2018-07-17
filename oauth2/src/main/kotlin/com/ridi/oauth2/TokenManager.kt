@@ -5,7 +5,6 @@ import com.ridi.books.helper.io.loadObject
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.android.schedulers.AndroidSchedulers
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
@@ -39,13 +38,13 @@ class TokenManager {
         }
     }
 
-    private var manager = ApiManager()
+    private var apiManager = ApiManager()
 
     var clientId: String? = null
     var tokenFile: File? = null
         set(value) {
             field = value
-            manager.cookieInterceptor.tokenFile = value
+            apiManager.cookieInterceptor.tokenFile = value
         }
 
     var useDevMode: Boolean = false
@@ -55,8 +54,8 @@ class TokenManager {
 
     fun setSessionId(sessionId: String) {
         clearSavedTokens()
-        manager.cookieInterceptor.cookies = HashSet()
-        manager.cookieInterceptor.cookies.add("PHPSESSID=$sessionId;")
+        apiManager.cookieInterceptor.cookies = HashSet()
+        apiManager.cookieInterceptor.cookies.add("PHPSESSID=$sessionId;")
     }
 
     private fun clearSavedTokens() {
@@ -119,11 +118,11 @@ class TokenManager {
                     emitter.onComplete()
                 }
             }
-        }).subscribeOn(AndroidSchedulers.mainThread())
+        })
     }
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
-        manager.service!!.requestAuthorization(clientId!!, "code", redirectUri)
+        apiManager.service!!.requestAuthorization(clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     emitter.onError(t)
@@ -149,7 +148,7 @@ class TokenManager {
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
         clearSavedTokens()
-        manager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
+        apiManager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     emitter.onError(IllegalStateException())
