@@ -4,13 +4,13 @@ import android.content.Context
 import android.support.test.InstrumentationRegistry
 import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_AT
 import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_RT
-import junit.framework.Assert.assertEquals
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.json.JSONObject
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
@@ -116,13 +116,8 @@ class TokenManagerTest {
         tokenManager.clientId = CLIENT_ID
         tokenManager.setSessionId(VALID_SESSION_ID)
         tokenManager.tokenFile = tokenFile
-        try {
-            tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
-                assertEquals(it.subject, "AndroidKim")
-            }
-        } catch (e: Exception) {
-            fail()
-            return
+        tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
+            assertEquals(it.subject, "AndroidKim")
         }
     }
 

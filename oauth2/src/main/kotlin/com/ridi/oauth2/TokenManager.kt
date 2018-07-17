@@ -135,7 +135,7 @@ class TokenManager {
                         val redirectLocation = response.headers().values("Location")[0]
                         if (redirectLocation == redirectUri) {
                             // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
-                            emitter.onNext(parsedAccessToken)
+                            emitter.onNext(parsedAccessToken!!)
                         } else {
                             emitter.onError(MalformedURLException())
                         }
@@ -157,7 +157,7 @@ class TokenManager {
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    emitter.onNext(parsedAccessToken)
+                    emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
                 }
             })
