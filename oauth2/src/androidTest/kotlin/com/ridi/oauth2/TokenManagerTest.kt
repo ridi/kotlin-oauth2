@@ -56,7 +56,7 @@ class TokenManagerTest {
         @Throws(InterruptedException::class)
         override fun dispatch(request: RecordedRequest): MockResponse {
             return if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
-                MockResponse().setResponseCode(200)
+                MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
             } else {
                 val atCookies = "$COOKIE_KEY_RIDI_AT=$RIDI_AT;"
                 val rtCookies = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
