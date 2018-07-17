@@ -11,17 +11,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled true
-            consumerProguardFiles 'proguard-rules.pro'
-        }
-        debug {
-            minifyEnabled true
-            consumerProguardFiles 'proguard-rules.pro'
-        }
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     sourceSets {
