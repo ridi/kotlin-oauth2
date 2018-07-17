@@ -3,8 +3,8 @@ package com.ridi.demoapp
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import com.ridi.oauth2.TokenManager
 import java.io.File
 
@@ -28,9 +28,9 @@ class MainActivity : Activity() {
                 "/tokenJSON.json")
             tokenManager.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
             tokenManager.getAccessToken("app://authorized").subscribe({
-                Log.d(javaClass.name, "Received => $it")
+                Toast.makeText(this,"Received => $it",Toast.LENGTH_SHORT).show()
             }, {
-                Log.e(javaClass.name, "Error => $it")
+                Toast.makeText(this,"Error => $it",Toast.LENGTH_SHORT).show()
             })
         }
     }
