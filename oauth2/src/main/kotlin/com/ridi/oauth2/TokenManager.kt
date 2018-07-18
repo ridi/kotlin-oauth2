@@ -40,26 +40,35 @@ class TokenManager {
     private var apiManager = ApiManager()
 
     var clientId: String? = null
+        set(value) {
+            field = value
+            clearTokens()
+        }
+
     var tokenFile: File? = null
         set(value) {
             field = value
+            clearTokens()
             apiManager.cookieInterceptor.tokenFile = value
         }
 
     var useDevMode: Boolean = false
         set(value) {
+            field = value
+            clearTokens()
             BASE_URL = "https://" + if (value) DEV_HOST else REAL_HOST
         }
 
     fun setSessionId(sessionId: String) {
-        clearSavedTokens()
+        clearTokens()
         apiManager.cookieInterceptor.cookies = HashSet()
         apiManager.cookieInterceptor.cookies.add("PHPSESSID=$sessionId;")
     }
 
-    private fun clearSavedTokens() {
+    private fun clearTokens() {
         rawAccessToken = null
         refreshToken = null
+        parsedAccessToken = null
     }
 
     private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
@@ -144,7 +153,7 @@ class TokenManager {
     }
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
-        clearSavedTokens()
+        clearTokens()
         apiManager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
