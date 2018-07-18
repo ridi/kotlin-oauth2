@@ -14,7 +14,7 @@ class WebViewActivity : Activity() {
 
     private val DEV_HOST = "account.dev.ridi.io/"
     private val REAL_HOST = "account.ridibooks.com/"
-    private val BASE_URL = "https://$DEV_HOST"
+    private val BASE_URL = "https://$REAL_HOST"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
