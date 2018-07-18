@@ -153,7 +153,6 @@ class TokenManager {
     }
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
-        clearTokens()
         apiManager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
@@ -161,6 +160,7 @@ class TokenManager {
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    clearTokens()
                     emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
                 }
