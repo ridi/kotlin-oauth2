@@ -4,7 +4,6 @@ import android.util.Base64
 import com.ridi.books.helper.io.loadObject
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
-import io.reactivex.ObservableOnSubscribe
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
@@ -104,10 +103,9 @@ class TokenManager {
         parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
-        return Observable.create(ObservableOnSubscribe<JWT> { emitter ->
+        return Observable.create { emitter ->
             if (tokenFile == null || clientId == null) {
                 emitter.onError(IllegalStateException())
-                emitter.onComplete()
             } else if (tokenFile!!.exists().not()) {
                 requestAuthorization(emitter, redirectUri)
             } else {
@@ -118,7 +116,7 @@ class TokenManager {
                     emitter.onComplete()
                 }
             }
-        })
+        }
     }
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
@@ -126,7 +124,6 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     emitter.onError(t)
-                    emitter.onComplete()
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -135,13 +132,13 @@ class TokenManager {
                         if (redirectLocation == redirectUri) {
                             // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
                             emitter.onNext(parsedAccessToken!!)
+                            emitter.onComplete()
                         } else {
                             emitter.onError(MalformedURLException())
                         }
                     } else {
                         emitter.onError(InvalidParameterException("${response.code()}"))
                     }
-                    emitter.onComplete()
                 }
             })
     }
@@ -151,8 +148,7 @@ class TokenManager {
         apiManager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                    emitter.onError(IllegalStateException())
-                    emitter.onComplete()
+                    emitter.onError(IllegalStateException(t))
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
