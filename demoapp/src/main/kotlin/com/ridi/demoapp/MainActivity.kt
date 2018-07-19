@@ -23,9 +23,10 @@ class MainActivity : Activity() {
         }
 
         findViewById<Button>(R.id.access_token_button).setOnClickListener {
+            tokenManager.useDevMode = true
             tokenManager.tokenFile = File(applicationContext.filesDir.absolutePath +
                 "/tokenJSON.json")
-            tokenManager.clientId = "ePgbKKRyPvdAFzTvFg2DvrS7GenfstHdkQ2uvFNd"
+            tokenManager.clientId = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
             tokenManager.getAccessToken("app://authorized").subscribe({
                 Toast.makeText(this,"Received => $it",Toast.LENGTH_SHORT).show()
             }, {
