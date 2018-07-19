@@ -12,11 +12,13 @@ import retrofit2.Response
 import java.io.File
 import java.io.FileNotFoundException
 import java.net.HttpURLConnection
-import java.net.MalformedURLException
-import java.security.InvalidParameterException
 import java.util.Calendar
 
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
+
+class UnExpectedRedirectUriException(override var message: String) : RuntimeException(message)
+
+class ResponseCodeException(override var message: String) : RuntimeException(message)
 
 class TokenManager {
     companion object {
@@ -69,9 +71,6 @@ class TokenManager {
         rawAccessToken = null
         refreshToken = null
         parsedAccessToken = null
-        if (tokenFile != null && tokenFile!!.exists()) {
-            tokenFile!!.delete()
-        }
     }
 
     private fun getSavedJSON(): JSONObject {
@@ -147,10 +146,10 @@ class TokenManager {
                             emitter.onNext(parsedAccessToken!!)
                             emitter.onComplete()
                         } else {
-                            emitter.onError(MalformedURLException())
+                            emitter.onError(UnExpectedRedirectUriException(redirectLocation))
                         }
                     } else {
-                        emitter.onError(InvalidParameterException("${response.code()}"))
+                        emitter.onError(ResponseCodeException("${response.code()}"))
                     }
                 }
             })

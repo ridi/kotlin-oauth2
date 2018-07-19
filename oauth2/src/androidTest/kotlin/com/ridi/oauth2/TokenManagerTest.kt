@@ -19,7 +19,6 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.io.File
 import java.net.HttpURLConnection
-import java.security.InvalidParameterException
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TokenManagerTest {
@@ -90,7 +89,7 @@ class TokenManagerTest {
         tokenManager.tokenFile = tokenFile
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: Exception) {
+        } catch (e: IllegalStateException) {
             assertEquals(e::class, IllegalStateException::class)
             return
         }
@@ -104,7 +103,7 @@ class TokenManagerTest {
         tokenManager.setSessionId(VALID_SESSION_ID)
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: Exception) {
+        } catch (e: IllegalStateException) {
             assertEquals(e::class, IllegalStateException::class)
             return
         }
@@ -118,8 +117,8 @@ class TokenManagerTest {
         tokenManager.setSessionId(INVALID_SESSION_ID)
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: InvalidParameterException) {
-            assertEquals(e::class, InvalidParameterException::class)
+        } catch (e: ResponseCodeException) {
+            assertEquals(e::class, ResponseCodeException::class)
             assertEquals(e.message, "${HttpURLConnection.HTTP_OK}")
             return
         }
