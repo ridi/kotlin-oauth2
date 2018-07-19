@@ -8,7 +8,7 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.ridi.demoapp.MainActivity.Companion.tokenManager
+import com.ridi.demoapp.MainActivity.Token.tokenManager
 
 class WebViewActivity : Activity() {
 
