@@ -69,6 +69,9 @@ class TokenManager {
         rawAccessToken = null
         refreshToken = null
         parsedAccessToken = null
+        if (tokenFile != null && tokenFile!!.exists()) {
+            tokenFile!!.delete()
+        }
     }
 
     private fun getSavedJSON(): JSONObject {

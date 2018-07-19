@@ -8,13 +8,13 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.ridi.demoapp.MainActivity.Token.tokenManager
+import com.ridi.demoapp.MainActivity.TokenManager.tokenManager
 
 class WebViewActivity : Activity() {
 
     private val DEV_HOST = "account.dev.ridi.io/"
     private val REAL_HOST = "account.ridibooks.com/"
-    private val BASE_URL = "https://$DEV_HOST"
+    private val BASE_URL = if (tokenManager.useDevMode) "https://$DEV_HOST" else "https://$REAL_HOST"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
