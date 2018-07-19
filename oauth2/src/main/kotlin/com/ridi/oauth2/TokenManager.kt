@@ -71,9 +71,10 @@ class TokenManager {
         parsedAccessToken = null
     }
 
-    private fun readJSONFile() = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
-
-    private fun getSavedJSON() = JSONObject(readJSONFile())
+    private fun getSavedJSON(): JSONObject {
+        val savedToken = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
+        return JSONObject(savedToken)
+    }
 
     private var rawAccessToken: String? = null
         get() {
