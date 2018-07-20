@@ -16,7 +16,7 @@ import java.util.Calendar
 
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
-class UnExpectedRedirectUriException(override var message: String) : RuntimeException(message)
+class UnexpectedRedirectUriException(override var message: String) : RuntimeException(message)
 
 class ResponseCodeException(override var message: String) : RuntimeException(message)
 
@@ -111,7 +111,7 @@ class TokenManager {
             jsonObject.getInt("exp"))
     }
 
-    private fun isAccessTokenExpired(): Boolean =
+    private fun isAccessTokenExpired() =
         parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
@@ -146,7 +146,7 @@ class TokenManager {
                             emitter.onNext(parsedAccessToken!!)
                             emitter.onComplete()
                         } else {
-                            emitter.onError(UnExpectedRedirectUriException(redirectLocation))
+                            emitter.onError(UnexpectedRedirectUriException(redirectLocation))
                         }
                     } else {
                         emitter.onError(ResponseCodeException("${response.code()}"))
