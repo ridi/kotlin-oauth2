@@ -7,14 +7,15 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Switch
 import android.widget.Toast
-import com.ridi.demoapp.MainActivity.TokenManager.tokenManager
+import com.ridi.demoapp.TokenManager.tokenManager
 import com.ridi.oauth2.TokenManager
 import java.io.File
 
+internal object TokenManager {
+    internal var tokenManager = TokenManager()
+}
+
 class MainActivity : Activity() {
-    internal object TokenManager {
-        internal var tokenManager = TokenManager()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
