@@ -3,6 +3,7 @@ package com.ridi.demoapp
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.Switch
 import android.widget.Toast
@@ -20,9 +21,9 @@ class MainActivity : Activity() {
         setContentView(R.layout.activity_main)
 
         val switch = findViewById<Switch>(R.id.server_switch)
+        tokenManager.useDevMode = true
 
         findViewById<Button>(R.id.login_button).setOnClickListener {
-            tokenManager.useDevMode = switch.isChecked.not()
             val intent = Intent(this, WebViewActivity::class.java)
             startActivity(intent)
         }
@@ -36,8 +37,10 @@ class MainActivity : Activity() {
 
             tokenManager.getAccessToken("app://authorized").subscribe({
                 Toast.makeText(this, "Received => $it", Toast.LENGTH_SHORT).show()
+                Log.e(javaClass.name, "Received => $it")
             }, {
                 Toast.makeText(this, "Error => $it", Toast.LENGTH_SHORT).show()
+                Log.e(javaClass.name, "Error => $it")
             })
         }
 
