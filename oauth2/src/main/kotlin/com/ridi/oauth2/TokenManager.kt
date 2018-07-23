@@ -61,6 +61,12 @@ class TokenManager {
             BASE_URL = "https://" + if (value) DEV_HOST else REAL_HOST
         }
 
+    var tokenEncryptionKey: String? = null
+        set(value) {
+            field = value
+            apiManager.cookieInterceptor.tokenEncryptionKey = value
+        }
+
     fun setSessionId(sessionId: String) {
         clearTokens()
         apiManager.cookieInterceptor.cookies = HashSet()
@@ -75,7 +81,7 @@ class TokenManager {
 
     private fun getSavedJSON(): JSONObject {
         val savedToken = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
-        return JSONObject(savedToken)
+        return JSONObject(savedToken.decodeWithAES256(tokenEncryptionKey))
     }
 
     private var rawAccessToken: String? = null

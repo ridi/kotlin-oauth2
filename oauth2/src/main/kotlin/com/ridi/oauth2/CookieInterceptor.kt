@@ -9,6 +9,7 @@ import java.io.File
 class CookieInterceptor : Interceptor {
     var tokenFile: File? = null
     var cookies = HashSet<String>()
+    var tokenEncryptionKey: String? = null
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
@@ -30,7 +31,7 @@ class CookieInterceptor : Interceptor {
             }
 
             if (tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_RT)) {
-                tokenJSON.toString().saveToFile(tokenFile!!)
+                tokenJSON.toString().encodeWithAES256(tokenEncryptionKey).saveToFile(tokenFile!!)
             }
         }
         return response

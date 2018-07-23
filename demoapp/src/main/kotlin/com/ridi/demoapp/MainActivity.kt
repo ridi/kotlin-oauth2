@@ -30,6 +30,7 @@ class MainActivity : Activity() {
         }
 
         findViewById<Button>(R.id.access_token_button).setOnClickListener {
+            tokenManager.tokenEncryptionKey = "1111111111111111"
             tokenManager.tokenFile = File(applicationContext.filesDir.absolutePath +
                 "/tokenJSON.json")
             tokenManager.clientId =
