@@ -51,7 +51,7 @@ class TokenManager {
         set(value) {
             field = value
             clearTokens()
-            apiManager.cookieInterceptor.tokenFile = value
+            apiManager.cookieStorage.tokenFile = value
         }
 
     var useDevMode: Boolean = false
@@ -64,14 +64,14 @@ class TokenManager {
     var tokenEncryptionKey: String? = null
         set(value) {
             field = value
-            apiManager.cookieInterceptor.tokenEncryptionKey = value
+            apiManager.cookieStorage.tokenEncryptionKey = value
         }
 
-    fun setSessionId(sessionId: String) {
-        clearTokens()
-        apiManager.cookieInterceptor.cookies = HashSet()
-        apiManager.cookieInterceptor.cookies.add("PHPSESSID=$sessionId;")
-    }
+    var sessionId: String = ""
+        set(value) {
+            field = value
+            clearTokens()
+        }
 
     private fun clearTokens() {
         rawAccessToken = null
@@ -138,7 +138,8 @@ class TokenManager {
     }
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
-        apiManager.service!!.requestAuthorization(clientId!!, "code", redirectUri)
+        val sessionCookie = "PHPSESSID=$sessionId;"
+        apiManager.service!!.requestAuthorization(sessionCookie, clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     emitter.onError(t)

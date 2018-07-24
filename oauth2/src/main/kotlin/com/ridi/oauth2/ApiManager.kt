@@ -13,13 +13,11 @@ import retrofit2.http.Query
 
 class ApiManager {
     private lateinit var retrofit: Retrofit
-    internal val cookieInterceptor = CookieInterceptor()
     internal var cookieStorage = CookieStorage()
 
     internal var service: ApiService? = null
         get() {
             val client = OkHttpClient().newBuilder()
-                .addInterceptor(cookieInterceptor)
                 .cookieJar(cookieStorage)
                 .build()
             retrofit = Retrofit.Builder()
@@ -33,6 +31,7 @@ class ApiManager {
     internal interface ApiService {
         @GET("ridi/authorize")
         fun requestAuthorization(
+            @Header("Cookie") sessionCookie: String,
             @Query("client_id") clientId: String,
             @Query("response_type") responseType: String,
             @Query("redirect_uri") redirectUri: String

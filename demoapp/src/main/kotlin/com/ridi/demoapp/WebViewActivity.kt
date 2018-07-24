@@ -43,7 +43,7 @@ class WebViewActivity : Activity() {
                     splitCookies.forEach { cookie ->
                         val keyValue = cookie.split("=")
                         if (keyValue[0] == "PHPSESSID") {
-                            tokenManager.setSessionId(keyValue[1])
+                            tokenManager.sessionId = keyValue[1]
                         }
                     }
                 }

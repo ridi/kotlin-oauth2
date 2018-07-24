@@ -87,7 +87,7 @@ class TokenManagerTest {
     @Test
     fun needClientId() {
         tokenManager.clientId = null
-        tokenManager.setSessionId(VALID_SESSION_ID)
+        tokenManager.sessionId = VALID_SESSION_ID
         tokenManager.tokenFile = tokenFile
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
@@ -102,7 +102,7 @@ class TokenManagerTest {
     fun needTokenFile() {
         tokenManager.clientId = CLIENT_ID
         tokenManager.tokenFile = null
-        tokenManager.setSessionId(VALID_SESSION_ID)
+        tokenManager.sessionId = VALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: IllegalStateException) {
@@ -116,7 +116,7 @@ class TokenManagerTest {
     fun returnLoginURL() {
         tokenManager.clientId = CLIENT_ID
         tokenManager.tokenFile = tokenFile
-        tokenManager.setSessionId(INVALID_SESSION_ID)
+        tokenManager.sessionId = INVALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: ResponseCodeException) {
@@ -130,7 +130,7 @@ class TokenManagerTest {
     @Test
     fun workProperly() {
         tokenManager.clientId = CLIENT_ID
-        tokenManager.setSessionId(VALID_SESSION_ID)
+        tokenManager.sessionId = VALID_SESSION_ID
         tokenManager.tokenFile = tokenFile
         tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
             assertEquals(it.subject, "AndroidKim")
@@ -140,7 +140,7 @@ class TokenManagerTest {
     @Test
     fun refreshToken() {
         tokenManager.clientId = CLIENT_ID
-        tokenManager.setSessionId(VALID_SESSION_ID)
+        tokenManager.sessionId = VALID_SESSION_ID
 
         val testJSON = JSONObject()
         testJSON.put(COOKIE_KEY_RIDI_AT, RIDI_AT)
