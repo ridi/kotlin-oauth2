@@ -2,6 +2,7 @@ package com.ridi.oauth2
 
 import android.content.Context
 import android.support.test.InstrumentationRegistry
+import android.webkit.CookieManager
 import com.ridi.books.helper.io.saveToFile
 import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_AT
 import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_RT
@@ -55,6 +56,7 @@ class TokenManagerTest {
             tokenFile!!.delete()
         }
         tokenManager = TokenManager()
+        CookieManager.getInstance().removeAllCookies(null)
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {

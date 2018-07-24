@@ -64,6 +64,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+    implementation 'com.squareup.okhttp3:okhttp-urlconnection:3.2.0'
     implementation 'io.reactivex.rxjava2:rxjava:2.1.16'
     implementation 'com.github.ridi:rbhelper-android:1.2.4'
 }

@@ -14,11 +14,13 @@ import retrofit2.http.Query
 class ApiManager {
     private lateinit var retrofit: Retrofit
     internal val cookieInterceptor = CookieInterceptor()
+    internal var cookieStorage = CookieStorage()
 
     internal var service: ApiService? = null
         get() {
             val client = OkHttpClient().newBuilder()
-                .addNetworkInterceptor(cookieInterceptor)
+                .addInterceptor(cookieInterceptor)
+                .cookieJar(cookieStorage)
                 .build()
             retrofit = Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create())
