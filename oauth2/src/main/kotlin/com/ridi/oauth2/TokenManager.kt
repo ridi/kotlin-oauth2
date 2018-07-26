@@ -67,7 +67,7 @@ class TokenManager {
             apiManager.cookieStorage.tokenEncryptionKey = value
         }
 
-    var sessionId: String = ""
+    var sessionId = ""
         set(value) {
             field = value
             clearTokens()
@@ -86,7 +86,7 @@ class TokenManager {
 
     private var rawAccessToken: String? = null
         get() {
-            if (field == null) {
+            if (field == null && getSavedJSON().has(COOKIE_KEY_RIDI_AT)) {
                 field = getSavedJSON().getString(COOKIE_KEY_RIDI_AT)
             }
             return field
@@ -94,7 +94,7 @@ class TokenManager {
 
     private var refreshToken: String? = null
         get() {
-            if (field == null) {
+            if (field == null && getSavedJSON().has(COOKIE_KEY_RIDI_RT)) {
                 field = getSavedJSON().getString(COOKIE_KEY_RIDI_RT)
             }
             return field
@@ -108,7 +108,10 @@ class TokenManager {
             return field
         }
 
-    private fun parseAccessToken(): JWT {
+    private fun parseAccessToken(): JWT? {
+        if (rawAccessToken == null) {
+            return null
+        }
         val splitString = rawAccessToken!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         // splitString[0]에는 필요한 정보가 없다.
         val jsonObject = JSONObject(String(Base64.decode(splitString[1], Base64.DEFAULT)))
@@ -146,18 +149,26 @@ class TokenManager {
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if (response.code() == HttpURLConnection.HTTP_MOVED_TEMP) {
-                        val redirectLocation = response.headers().values("Location")[0]
-                        if (redirectLocation == redirectUri) {
-                            // 토큰은 이미 ApiManager 내의 CookieInterceptor에서 tokenFile에 저장된 상태이다.
+                    val priorResponse = response.raw().priorResponse()
+                    if (priorResponse == null || priorResponse.code() != HttpURLConnection.HTTP_MOVED_TEMP) {
+                        emitter.onError(ResponseCodeException("${response.code()}"))
+                        return
+                    }
+
+                    var currentResponse = response.raw()
+                    while (currentResponse.priorResponse() != null) {
+                        val tokenCookies = currentResponse.headers().values("Set-Cookie").filter {
+                            it.startsWith(COOKIE_KEY_RIDI_AT) || it.startsWith(COOKIE_KEY_RIDI_RT)
+                        }
+                        if (tokenCookies.size >= 2 &&
+                            currentResponse.headers().values("Location")[0] == redirectUri) {
                             emitter.onNext(parsedAccessToken!!)
                             emitter.onComplete()
-                        } else {
-                            emitter.onError(UnexpectedRedirectUriException(redirectLocation))
+                            return
                         }
-                    } else {
-                        emitter.onError(ResponseCodeException("${response.code()}"))
+                        currentResponse = currentResponse.priorResponse()
                     }
+                    emitter.onError(UnexpectedRedirectUriException(response.raw().request().url().toString()))
                 }
             })
     }

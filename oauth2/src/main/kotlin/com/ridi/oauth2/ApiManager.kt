@@ -11,11 +11,11 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-class ApiManager {
+internal class ApiManager {
     private lateinit var retrofit: Retrofit
-    internal var cookieStorage = CookieStorage()
+    var cookieStorage = CookieStorage()
 
-    internal var service: ApiService? = null
+    var service: ApiService? = null
         get() {
             val client = OkHttpClient().newBuilder()
                 .cookieJar(cookieStorage)
@@ -28,7 +28,7 @@ class ApiManager {
             return retrofit.create(ApiService::class.java)
         }
 
-    internal interface ApiService {
+    interface ApiService {
         @GET("ridi/authorize")
         fun requestAuthorization(
             @Header("Cookie") sessionCookie: String,

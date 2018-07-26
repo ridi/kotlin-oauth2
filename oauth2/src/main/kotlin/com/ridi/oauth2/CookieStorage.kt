@@ -8,7 +8,7 @@ import okhttp3.HttpUrl
 import org.json.JSONObject
 import java.io.File
 
-class CookieStorage : CookieJar {
+internal class CookieStorage : CookieJar {
     var tokenFile: File? = null
     var tokenEncryptionKey: String? = null
 
@@ -18,8 +18,8 @@ class CookieStorage : CookieJar {
         if (cookieManager.getCookie(url.toString()) != null) {
             val splitCookies = cookieManager.getCookie(url.toString()).split("[,;]".toRegex())
                 .dropLastWhile { it.isEmpty() }.toTypedArray()
-            splitCookies.indices.forEach {
-                cookies.add(Cookie.parse(url, splitCookies[it].trim { it <= ' ' })!!)
+            splitCookies.forEach {
+                cookies.add(Cookie.parse(url, it.trim())!!)
             }
         }
         return cookies
