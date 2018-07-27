@@ -42,6 +42,7 @@ class TokenManagerTest {
 
     private var tokenFile: File? = null
     private lateinit var tokenManager: TokenManager
+    private var isPriorResponseCalled = false
 
     @Before
     fun setUp() {
@@ -57,6 +58,7 @@ class TokenManagerTest {
         }
         tokenManager = TokenManager()
         CookieManager.getInstance().removeAllCookies(null)
+        isPriorResponseCalled = false
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
@@ -64,7 +66,11 @@ class TokenManagerTest {
         @Throws(InterruptedException::class)
         override fun dispatch(request: RecordedRequest): MockResponse {
             return if (request.requestUrl.toString().contains("ridi/authorize")) {
-                if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
+                if (isPriorResponseCalled.not()) {
+                    isPriorResponseCalled = true
+                    MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+                        .setHeader("Location", request.requestUrl)
+                } else if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
                     MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
                 } else {
                     val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT;"
@@ -119,9 +125,8 @@ class TokenManagerTest {
         tokenManager.sessionId = INVALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: ResponseCodeException) {
-            assertEquals(e::class, ResponseCodeException::class)
-            assertEquals(e.message, "${HttpURLConnection.HTTP_OK}")
+        } catch (e: UnexpectedRedirectUriException) {
+            assertEquals(e::class, UnexpectedRedirectUriException::class)
             return
         }
         fail()
