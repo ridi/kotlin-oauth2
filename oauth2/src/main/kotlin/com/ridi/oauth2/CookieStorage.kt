@@ -11,9 +11,9 @@ import java.io.File
 internal class CookieStorage : CookieJar {
     var tokenFile: File? = null
     var tokenEncryptionKey: String? = null
+    val cookieManager = CookieManager.getInstance()
 
     override fun loadForRequest(url: HttpUrl): MutableList<Cookie> {
-        val cookieManager = CookieManager.getInstance()
         val cookies = ArrayList<Cookie>()
         if (cookieManager.getCookie(url.toString()) != null) {
             val splitCookies = cookieManager.getCookie(url.toString()).split("[,;]".toRegex())
@@ -26,7 +26,6 @@ internal class CookieStorage : CookieJar {
     }
 
     override fun saveFromResponse(url: HttpUrl?, cookies: MutableList<Cookie>) {
-        val cookieManager = CookieManager.getInstance()
         val tokenJSON = JSONObject()
         cookies.forEach { cookie ->
             cookieManager.setCookie(url.toString(), cookie.toString())
@@ -37,5 +36,9 @@ internal class CookieStorage : CookieJar {
         if (tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_RT)) {
             tokenJSON.toString().encodeWithAES256(tokenEncryptionKey).saveToFile(tokenFile!!)
         }
+    }
+
+    fun removeCookiesInUrl(url: String) {
+        cookieManager.setCookie(url,"")
     }
 }

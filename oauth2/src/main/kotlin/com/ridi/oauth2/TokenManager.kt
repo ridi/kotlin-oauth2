@@ -145,10 +145,12 @@ class TokenManager {
         apiManager.service!!.requestAuthorization(sessionCookie, clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
                     emitter.onError(t)
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
                     val priorResponse = response.raw().priorResponse()
                     if (priorResponse == null || priorResponse.code() != HttpURLConnection.HTTP_MOVED_TEMP) {
                         emitter.onError(ResponseCodeException("${response.code()}"))
@@ -177,10 +179,12 @@ class TokenManager {
         apiManager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
+                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
                     emitter.onError(IllegalStateException(t))
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
                     clearTokens()
                     emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
