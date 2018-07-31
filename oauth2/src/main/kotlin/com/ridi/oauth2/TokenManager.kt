@@ -49,8 +49,8 @@ class TokenManager {
 
     var tokenFile: File? = null
         set(value) {
-            field = value
             clearTokens()
+            field = value
             apiManager.cookieStorage.tokenFile = value
         }
 
@@ -73,10 +73,13 @@ class TokenManager {
             clearTokens()
         }
 
-    private fun clearTokens() {
+    private fun clearTokens(isDeletingTokenFileNeeded: Boolean = true) {
         rawAccessToken = null
         refreshToken = null
         parsedAccessToken = null
+        if (tokenFile != null && tokenFile!!.exists() && isDeletingTokenFileNeeded!!) {
+            tokenFile!!.delete()
+        }
     }
 
     private fun getSavedJSON(): JSONObject {
@@ -185,7 +188,7 @@ class TokenManager {
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
-                    clearTokens()
+                    clearTokens(false)
                     emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
                 }
