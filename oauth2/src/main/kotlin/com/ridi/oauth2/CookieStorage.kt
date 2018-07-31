@@ -39,6 +39,6 @@ internal class CookieStorage : CookieJar {
     }
 
     fun removeCookiesInUrl(url: String) {
-        cookieManager.setCookie(url,"")
+        cookieManager.setCookie(url, "")
     }
 }

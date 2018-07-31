@@ -128,6 +128,9 @@ class TokenManager {
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create { emitter ->
+            if (emitter.isDisposed) {
+                emitter.onComplete()
+            }
             if (tokenFile == null || clientId == null) {
                 emitter.onError(IllegalStateException())
             } else if (tokenFile!!.exists().not()) {
