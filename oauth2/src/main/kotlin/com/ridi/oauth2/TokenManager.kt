@@ -129,9 +129,6 @@ class TokenManager {
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create { emitter ->
-            if (emitter.isDisposed) {
-                emitter.onComplete()
-            }
             if (tokenFile == null || clientId == null) {
                 emitter.onError(IllegalStateException())
             } else if (tokenFile!!.exists().not()) {
@@ -153,31 +150,41 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
-                    emitter.onError(t)
+                    if (emitter.isDisposed.not()) {
+                        emitter.onError(t)
+                    }
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
-                    val priorResponse = response.raw().priorResponse()
+                    var currentResponse = response.raw()
+                    var priorResponse = currentResponse.priorResponse()
+
                     if (priorResponse == null || priorResponse.code() != HttpURLConnection.HTTP_MOVED_TEMP) {
-                        emitter.onError(ResponseCodeException("${response.code()}"))
+                        if (emitter.isDisposed.not()) {
+                            emitter.onError(ResponseCodeException("${response.code()}"))
+                        }
                         return
                     }
 
-                    var currentResponse = response.raw()
-                    while (currentResponse.priorResponse() != null) {
+                    while (priorResponse != null) {
                         val tokenCookies = currentResponse.headers().values("Set-Cookie").filter {
                             it.startsWith(COOKIE_KEY_RIDI_AT) || it.startsWith(COOKIE_KEY_RIDI_RT)
                         }
                         if (tokenCookies.size >= 2 &&
                             currentResponse.headers().values("Location")[0] == redirectUri) {
-                            emitter.onNext(parsedAccessToken!!)
-                            emitter.onComplete()
+                            if (emitter.isDisposed.not()) {
+                                emitter.onNext(parsedAccessToken!!)
+                                emitter.onComplete()
+                            }
                             return
                         }
-                        currentResponse = currentResponse.priorResponse()
+                        currentResponse = priorResponse
+                        priorResponse = currentResponse.priorResponse()
                     }
-                    emitter.onError(UnexpectedRedirectUriException(response.raw().request().url().toString()))
+                    if (emitter.isDisposed.not()) {
+                        emitter.onError(UnexpectedRedirectUriException(response.raw().request().url().toString()))
+                    }
                 }
             })
     }
@@ -187,14 +194,18 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
-                    emitter.onError(IllegalStateException(t))
+                    if (emitter.isDisposed.not()) {
+                        emitter.onError(IllegalStateException(t))
+                    }
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
                     clearTokens(false)
-                    emitter.onNext(parsedAccessToken!!)
-                    emitter.onComplete()
+                    if (emitter.isDisposed.not()) {
+                        emitter.onNext(parsedAccessToken!!)
+                        emitter.onComplete()
+                    }
                 }
             })
     }
