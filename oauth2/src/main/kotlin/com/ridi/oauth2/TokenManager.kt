@@ -59,6 +59,7 @@ class TokenManager {
             field = value
             clearTokens()
             BASE_URL = "https://" + if (value) DEV_HOST else REAL_HOST
+            apiManager = ApiManager()
         }
 
     var tokenEncryptionKey: String? = null
@@ -77,7 +78,7 @@ class TokenManager {
         rawAccessToken = null
         refreshToken = null
         parsedAccessToken = null
-        if (tokenFile != null && tokenFile!!.exists() && isDeletingTokenFileNeeded!!) {
+        if (tokenFile != null && tokenFile!!.exists() && isDeletingTokenFileNeeded) {
             tokenFile!!.delete()
         }
     }
@@ -148,7 +149,7 @@ class TokenManager {
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
         val sessionCookie = "PHPSESSID=$sessionId;"
-        apiManager.service!!.requestAuthorization(sessionCookie, clientId!!, "code", redirectUri)
+        apiManager.service.requestAuthorization(sessionCookie, clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
@@ -182,7 +183,7 @@ class TokenManager {
     }
 
     private fun refreshAccessToken(emitter: ObservableEmitter<JWT>) {
-        apiManager.service!!.refreshAccessToken(rawAccessToken!!, refreshToken!!)
+        apiManager.service.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())

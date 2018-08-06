@@ -42,7 +42,7 @@ class TokenManagerTest {
 
     private var tokenFile: File? = null
     private lateinit var tokenManager: TokenManager
-    private var isPriorResponseCalled = false
+    private var isRedirected = false
 
     @Before
     fun setUp() {
@@ -58,7 +58,7 @@ class TokenManagerTest {
         }
         tokenManager = TokenManager()
         CookieManager.getInstance().removeAllCookies(null)
-        isPriorResponseCalled = false
+        isRedirected = false
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
@@ -66,8 +66,8 @@ class TokenManagerTest {
         @Throws(InterruptedException::class)
         override fun dispatch(request: RecordedRequest): MockResponse {
             return if (request.requestUrl.toString().contains("ridi/authorize")) {
-                if (isPriorResponseCalled.not()) {
-                    isPriorResponseCalled = true
+                if (isRedirected.not()) {
+                    isRedirected = true
                     MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
                         .setHeader("Location", request.requestUrl)
                 } else if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {

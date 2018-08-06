@@ -11,7 +11,7 @@ import java.io.File
 internal class CookieStorage : CookieJar {
     var tokenFile: File? = null
     var tokenEncryptionKey: String? = null
-    val cookieManager = CookieManager.getInstance()
+    private val cookieManager = CookieManager.getInstance()
 
     override fun loadForRequest(url: HttpUrl): MutableList<Cookie> {
         val cookies = ArrayList<Cookie>()

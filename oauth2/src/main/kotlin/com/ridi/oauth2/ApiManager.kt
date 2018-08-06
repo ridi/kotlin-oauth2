@@ -12,21 +12,18 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 internal class ApiManager {
-    private lateinit var retrofit: Retrofit
-    var cookieStorage = CookieStorage()
+    val cookieStorage = CookieStorage()
+    private val client = OkHttpClient().newBuilder()
+        .cookieJar(cookieStorage)
+        .build()
 
-    var service: ApiService? = null
-        get() {
-            val client = OkHttpClient().newBuilder()
-                .cookieJar(cookieStorage)
-                .build()
-            retrofit = Retrofit.Builder()
-                .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl(BASE_URL)
-                .client(client)
-                .build()
-            return retrofit.create(ApiService::class.java)
-        }
+    private val retrofit = Retrofit.Builder()
+        .addConverterFactory(GsonConverterFactory.create())
+        .baseUrl(BASE_URL)
+        .client(client)
+        .build()
+
+    val service: ApiService = retrofit.create(ApiService::class.java)
 
     interface ApiService {
         @GET("ridi/authorize")
