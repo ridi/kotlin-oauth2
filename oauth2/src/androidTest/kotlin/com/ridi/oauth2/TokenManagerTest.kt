@@ -30,7 +30,8 @@ class TokenManagerTest {
         private const val VALID_SESSION_ID = "1"
         private const val INVALID_SESSION_ID = "2"
         private const val CLIENT_ID = "3"
-        private const val APP_AUTHORIZED = "app://authorized"
+        private const val APP_AUTHORIZED = "app_authorized"
+        private const val LOGIN_PAGE = "login?return_url=login_required"
         private const val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
             "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
             "zVWlIMWtnTCIsInNjb3BlIjoiYWxsIn0.KP_jrSc1KZ36-TYf-oiTyMl2Zn-dm9C8x-eY0bV0uQ8"
@@ -42,7 +43,6 @@ class TokenManagerTest {
 
     private var tokenFile: File? = null
     private lateinit var tokenManager: TokenManager
-    private var isRedirected = false
 
     @Before
     fun setUp() {
@@ -58,7 +58,6 @@ class TokenManagerTest {
         }
         tokenManager = TokenManager()
         CookieManager.getInstance().removeAllCookies(null)
-        isRedirected = false
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
@@ -66,26 +65,20 @@ class TokenManagerTest {
         @Throws(InterruptedException::class)
         override fun dispatch(request: RecordedRequest): MockResponse {
             return if (request.requestUrl.toString().contains("ridi/authorize")) {
-                if (isRedirected.not()) {
-                    isRedirected = true
-                    MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-                        .setHeader("Location", request.requestUrl)
-                } else if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
+                MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+                    .setHeader("Location", if (request.headers.values("Cookie")[0]
+                        == "PHPSESSID=$INVALID_SESSION_ID;") LOGIN_PAGE else APP_AUTHORIZED)
+            } else {
+                if (request.requestUrl.toString().contains(LOGIN_PAGE)) {
                     MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
                 } else {
-                    val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT;"
+                    val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT_EXPIRES_AT_ZERO;"
                     val rtCookie = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
-                    MockResponse().setHeader("Location", APP_AUTHORIZED)
-                        .setHeader("Set-Cookie", atCookie)
+                    MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
+                        .setHeader("Location", APP_AUTHORIZED)
+                        .addHeader("Set-Cookie", atCookie)
                         .addHeader("Set-Cookie", rtCookie)
-                        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
                 }
-            } else {
-                val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT_EXPIRES_AT_ZERO;"
-                val rtCookie = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
-                MockResponse().setHeader("Set-Cookie", atCookie)
-                    .addHeader("Set-Cookie", rtCookie)
-                    .setResponseCode(HttpURLConnection.HTTP_OK)
             }
         }
     }
