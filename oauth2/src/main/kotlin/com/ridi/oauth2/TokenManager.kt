@@ -167,7 +167,9 @@ class TokenManager {
                         return
                     }
 
-                    while (priorResponse != null) {
+                    while (currentResponse != null) {
+                        priorResponse = currentResponse.priorResponse()
+
                         val tokenCookies = currentResponse.headers().values("Set-Cookie").filter {
                             it.startsWith(COOKIE_KEY_RIDI_AT) || it.startsWith(COOKIE_KEY_RIDI_RT)
                         }
@@ -180,7 +182,6 @@ class TokenManager {
                             return
                         }
                         currentResponse = priorResponse
-                        priorResponse = currentResponse.priorResponse()
                     }
                     if (emitter.isDisposed.not()) {
                         emitter.onError(UnexpectedRedirectUriException(response.raw().request().url().toString()))

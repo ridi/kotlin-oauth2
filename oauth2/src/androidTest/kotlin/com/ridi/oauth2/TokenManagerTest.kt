@@ -64,21 +64,28 @@ class TokenManagerTest {
 
         @Throws(InterruptedException::class)
         override fun dispatch(request: RecordedRequest): MockResponse {
-            return if (request.requestUrl.toString().contains("ridi/authorize")) {
-                MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-                    .setHeader("Location", if (request.headers.values("Cookie")[0]
-                        == "PHPSESSID=$INVALID_SESSION_ID;") LOGIN_PAGE else APP_AUTHORIZED)
-            } else {
-                if (request.requestUrl.toString().contains(LOGIN_PAGE)) {
-                    MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
-                } else {
-                    val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT_EXPIRES_AT_ZERO;"
-                    val rtCookie = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
-                    MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
-                        .setHeader("Location", APP_AUTHORIZED)
-                        .addHeader("Set-Cookie", atCookie)
-                        .addHeader("Set-Cookie", rtCookie)
+            val url = request.requestUrl.toString()
+            val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT_EXPIRES_AT_ZERO;"
+            val rtCookie = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
+
+            return if (url.contains("ridi/authorize")) {
+                MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP).run {
+                    if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
+                        setHeader("Location", LOGIN_PAGE)
+                    } else {
+                        setHeader("Location", APP_AUTHORIZED)
+                        addHeader("Set-Cookie", atCookie)
+                        addHeader("Set-Cookie", rtCookie)
+                    }
                 }
+            } else if (url.contains(LOGIN_PAGE) || url.contains(APP_AUTHORIZED)) {
+                MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
+            } else if (url.contains("ridi/token")) {
+                MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
+                    .addHeader("Set-Cookie", atCookie)
+                    .addHeader("Set-Cookie", rtCookie)
+            } else {
+                MockResponse().setResponseCode(HttpURLConnection.HTTP_FORBIDDEN)
             }
         }
     }
