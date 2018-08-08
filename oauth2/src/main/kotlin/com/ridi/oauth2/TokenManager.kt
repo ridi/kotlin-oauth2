@@ -146,14 +146,14 @@ class TokenManager {
         apiManager.service.requestAuthorization(sessionCookie, clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
+                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
                     if (emitter.isDisposed.not()) {
                         emitter.onError(t)
                     }
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
+                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
                     var currentResponse = response.raw()
 
                     while (currentResponse != null && emitter.isDisposed.not()) {
@@ -182,14 +182,14 @@ class TokenManager {
         apiManager.service.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
+                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
                     if (emitter.isDisposed.not()) {
                         emitter.onError(IllegalStateException(t))
                     }
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
+                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
                     clearTokens(false)
                     if (emitter.isDisposed.not()) {
                         emitter.onNext(parsedAccessToken!!)
@@ -198,4 +198,6 @@ class TokenManager {
                 }
             })
     }
+
+    private fun Call<ResponseBody>.requestUrlString() = this.request().url().toString()
 }
