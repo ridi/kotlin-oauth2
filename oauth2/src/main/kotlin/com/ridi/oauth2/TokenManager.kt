@@ -126,17 +126,14 @@ class TokenManager {
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create { emitter ->
-            if ((tokenFile == null || clientId == null) && emitter.isDisposed.not()) {
-                emitter.onError(IllegalStateException())
+            if (tokenFile == null || clientId == null) {
+                emitter.publishError(IllegalStateException())
             } else if (tokenFile!!.exists().not()) {
                 requestAuthorization(emitter, redirectUri)
+            } else if (isAccessTokenExpired()) {
+                refreshAccessToken(emitter)
             } else {
-                if (isAccessTokenExpired()) {
-                    refreshAccessToken(emitter)
-                } else if (emitter.isDisposed.not()) {
-                    emitter.onNext(parsedAccessToken!!)
-                    emitter.onComplete()
-                }
+                emitter.publishItem(parsedAccessToken!!)
             }
         }
     }
@@ -147,9 +144,7 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
-                    if (emitter.isDisposed.not()) {
-                        emitter.onError(t)
-                    }
+                    emitter.publishError(t)
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -162,18 +157,13 @@ class TokenManager {
                         }
                         if (tokenCookies.size >= 2 &&
                             currentResponse.headers().values("Location")[0] == redirectUri) {
-                            if (emitter.isDisposed.not()) {
-                                emitter.onNext(parsedAccessToken!!)
-                                emitter.onComplete()
-                            }
+                            emitter.publishItem(parsedAccessToken!!)
                             return
                         }
                         currentResponse = currentResponse.priorResponse()
                     }
-                    if (emitter.isDisposed.not()) {
-                        emitter.onError(UnexpectedRedirectUriException("Response Code = ${response.code()}," +
-                            "Redirected Url = " + response.raw().request().url().toString()))
-                    }
+                    emitter.publishError(UnexpectedRedirectUriException("Response Code = ${response.code()}," +
+                        "Redirected Url = " + response.raw().request().url().toString()))
                 }
             })
     }
@@ -183,21 +173,29 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
-                    if (emitter.isDisposed.not()) {
-                        emitter.onError(IllegalStateException(t))
-                    }
+                    emitter.publishError(IllegalStateException(t))
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
                     clearTokens(false)
-                    if (emitter.isDisposed.not()) {
-                        emitter.onNext(parsedAccessToken!!)
-                        emitter.onComplete()
-                    }
+                    emitter.publishItem(parsedAccessToken!!)
                 }
             })
     }
 
     private fun Call<ResponseBody>.requestUrlString() = this.request().url().toString()
+
+    private fun ObservableEmitter<JWT>.publishError(t: Throwable) {
+        if (this.isDisposed.not()) {
+            this.onError(t)
+        }
+    }
+
+    private fun ObservableEmitter<JWT>.publishItem(item: JWT) {
+        if (this.isDisposed.not()) {
+            this.onNext(item)
+            this.onComplete()
+        }
+    }
 }
