@@ -61,7 +61,6 @@ class TokenManagerTest {
     }
 
     private val dispatcher: Dispatcher = object : Dispatcher() {
-
         @Throws(InterruptedException::class)
         override fun dispatch(request: RecordedRequest): MockResponse {
             val url = request.requestUrl.toString()

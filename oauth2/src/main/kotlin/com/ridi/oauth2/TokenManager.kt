@@ -113,7 +113,7 @@ class TokenManager {
         if (rawAccessToken == null) {
             return null
         }
-        val splitString = rawAccessToken!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val splitString = rawAccessToken!!.split("\\.".toRegex()).dropLastWhile { it.isEmpty() }
         // splitString[0]에는 필요한 정보가 없다.
         val jsonObject = JSONObject(String(Base64.decode(splitString[1], Base64.DEFAULT)))
         return JWT(jsonObject.getString("sub"),
@@ -184,18 +184,18 @@ class TokenManager {
             })
     }
 
-    private fun Call<ResponseBody>.requestUrlString() = this.request().url().toString()
+    private fun Call<ResponseBody>.requestUrlString() = request().url().toString()
 
     private fun ObservableEmitter<JWT>.publishError(t: Throwable) {
-        if (this.isDisposed.not()) {
-            this.onError(t)
+        if (isDisposed.not()) {
+            onError(t)
         }
     }
 
     private fun ObservableEmitter<JWT>.publishItem(item: JWT) {
-        if (this.isDisposed.not()) {
-            this.onNext(item)
-            this.onComplete()
+        if (isDisposed.not()) {
+            onNext(item)
+            onComplete()
         }
     }
 }

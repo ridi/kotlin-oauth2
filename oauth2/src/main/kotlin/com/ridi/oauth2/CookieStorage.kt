@@ -17,7 +17,7 @@ internal class CookieStorage : CookieJar {
         val cookies = ArrayList<Cookie>()
         if (cookieManager.getCookie(url.toString()) != null) {
             val splitCookies = cookieManager.getCookie(url.toString()).split("[,;]".toRegex())
-                .dropLastWhile { it.isEmpty() }.toTypedArray()
+                .dropLastWhile { it.isEmpty() }
             splitCookies.forEach {
                 cookies.add(Cookie.parse(url, it.trim())!!)
             }
