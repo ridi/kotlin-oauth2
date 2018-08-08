@@ -129,14 +129,14 @@ class TokenManager {
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create { emitter ->
-            if (tokenFile == null || clientId == null) {
+            if ((tokenFile == null || clientId == null) && emitter.isDisposed.not()) {
                 emitter.onError(IllegalStateException())
             } else if (tokenFile!!.exists().not()) {
                 requestAuthorization(emitter, redirectUri)
             } else {
                 if (isAccessTokenExpired()) {
                     refreshAccessToken(emitter)
-                } else {
+                } else if (emitter.isDisposed.not()) {
                     emitter.onNext(parsedAccessToken!!)
                     emitter.onComplete()
                 }
