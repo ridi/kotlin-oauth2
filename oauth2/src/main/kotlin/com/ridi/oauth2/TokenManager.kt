@@ -63,6 +63,7 @@ class TokenManager {
         set(value) {
             field = value
             apiManager.cookieStorage.tokenEncryptionKey = value
+            clearTokens()
         }
 
     var sessionId = ""
