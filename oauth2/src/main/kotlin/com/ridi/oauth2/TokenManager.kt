@@ -11,14 +11,11 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.FileNotFoundException
-import java.net.HttpURLConnection
 import java.util.Calendar
 
 data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
 
-class UnexpectedRedirectUriException(override var message: String) : RuntimeException(message)
-
-class ResponseCodeException(override var message: String) : RuntimeException(message)
+class UnexpectedRedirectUriException(override var message: String) : Exception(message)
 
 class TokenManager {
     companion object {
@@ -158,18 +155,8 @@ class TokenManager {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.request().url().toString())
                     var currentResponse = response.raw()
-                    var priorResponse = currentResponse.priorResponse()
 
-                    if (priorResponse == null || priorResponse.code() != HttpURLConnection.HTTP_MOVED_TEMP) {
-                        if (emitter.isDisposed.not()) {
-                            emitter.onError(ResponseCodeException("${response.code()}"))
-                        }
-                        return
-                    }
-
-                    while (currentResponse != null) {
-                        priorResponse = currentResponse.priorResponse()
-
+                    while (currentResponse != null && emitter.isDisposed.not()) {
                         val tokenCookies = currentResponse.headers().values("Set-Cookie").filter {
                             it.startsWith(COOKIE_KEY_RIDI_AT) || it.startsWith(COOKIE_KEY_RIDI_RT)
                         }
@@ -181,10 +168,11 @@ class TokenManager {
                             }
                             return
                         }
-                        currentResponse = priorResponse
+                        currentResponse = currentResponse.priorResponse()
                     }
                     if (emitter.isDisposed.not()) {
-                        emitter.onError(UnexpectedRedirectUriException(response.raw().request().url().toString()))
+                        emitter.onError(UnexpectedRedirectUriException("Response Code = ${response.code()}," +
+                            "Redirected Url = " + response.raw().request().url().toString()))
                     }
                 }
             })

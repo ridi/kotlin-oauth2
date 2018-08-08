@@ -125,9 +125,10 @@ class TokenManagerTest {
         tokenManager.sessionId = INVALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: UnexpectedRedirectUriException) {
-            assertEquals(e::class, UnexpectedRedirectUriException::class)
-            return
+        } catch (e: RuntimeException) {
+            if (e.cause is UnexpectedRedirectUriException) {
+                return
+            }
         }
         fail()
     }
