@@ -13,9 +13,9 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.util.Calendar
 
-data class JWT(var subject: String, var userIndex: Int?, var expiresAt: Int)
+data class JWT(var subject: String, var userIndex: Int, var expiresAt: Int)
 
-class UnexpectedRedirectUriException(override var message: String) : Exception(message)
+class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: String) : Exception()
 
 class TokenManager {
     companion object {
@@ -162,8 +162,8 @@ class TokenManager {
                         }
                         currentResponse = currentResponse.priorResponse()
                     }
-                    emitter.publishError(UnexpectedRedirectUriException("Response Code = ${response.code()}," +
-                        "Redirected Url = " + response.raw().request().url().toString()))
+                    emitter.publishError(UnexpectedResponseException(response.code(),
+                        response.raw().request().url().toString()))
                 }
             })
     }

@@ -125,7 +125,7 @@ class TokenManagerTest {
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
         } catch (e: RuntimeException) {
-            if (e.cause is UnexpectedRedirectUriException) {
+            if (e.cause is UnexpectedResponseException) {
                 return
             }
         }
