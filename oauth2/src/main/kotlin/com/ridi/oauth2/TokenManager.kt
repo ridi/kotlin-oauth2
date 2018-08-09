@@ -10,12 +10,13 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
-import java.io.FileNotFoundException
 import java.util.Calendar
 
 data class JWT(var subject: String, var userIndex: Int, var expiresAt: Int)
 
 class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: String) : Exception()
+
+class InvalidTokenFileException : Exception()
 
 class TokenManager {
     companion object {
@@ -82,8 +83,9 @@ class TokenManager {
     }
 
     private fun getSavedJSON(): JSONObject {
-        val savedToken = tokenFile!!.loadObject<String>() ?: throw FileNotFoundException()
-        return JSONObject(savedToken.decodeWithAES256(tokenEncryptionKey))
+        tokenFile!!.loadObject<String>()?.let { tokenString ->
+            return JSONObject(tokenString.decodeWithAES128(tokenEncryptionKey))
+        } ?: throw InvalidTokenFileException()
     }
 
     private var rawAccessToken: String? = null

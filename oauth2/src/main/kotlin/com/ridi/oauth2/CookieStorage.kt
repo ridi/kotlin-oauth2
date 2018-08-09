@@ -34,7 +34,7 @@ internal class CookieStorage : CookieJar {
             }
         }
         if (tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_RT)) {
-            tokenJSON.toString().encodeWithAES256(tokenEncryptionKey).saveToFile(tokenFile!!)
+            tokenJSON.toString().encodeWithAES128(tokenEncryptionKey).saveToFile(tokenFile!!)
         }
     }
 
