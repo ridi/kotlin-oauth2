@@ -10,6 +10,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
+import java.net.URI
 import java.util.Calendar
 
 data class JWT(var subject: String, var userIndex: Int, var expiresAt: Int)
@@ -166,7 +167,8 @@ class TokenManager {
                             it.startsWith(COOKIE_KEY_RIDI_AT) || it.startsWith(COOKIE_KEY_RIDI_RT)
                         }
                         if (tokenCookies.size >= 2 &&
-                            currentResponse.headers().values("Location")[0] == redirectUri) {
+                            currentResponse.headers().values("Location")[0].normalizedURI()
+                            == redirectUri.normalizedURI()) {
                             emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
                             return
                         }
@@ -208,4 +210,6 @@ class TokenManager {
             onComplete()
         }
     }
+
+    private fun String.normalizedURI() = URI(this).normalize()
 }
