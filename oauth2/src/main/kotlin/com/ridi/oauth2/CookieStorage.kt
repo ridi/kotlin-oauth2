@@ -30,7 +30,7 @@ internal class CookieStorage : CookieJar {
         cookies.forEach { cookie ->
             cookieManager.setCookie(url.toString(), cookie.toString())
             TokenManager.run {
-                tokenJSON.parseCookie(cookie.toString())
+                tokenJSON.addTokensFromCookie(cookie.toString())
             }
         }
         if (tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_RT)) {

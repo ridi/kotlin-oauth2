@@ -164,10 +164,10 @@ class TokenManagerTest {
     fun checkCookieParsing() {
         TokenManager.run {
             val jsonObject = JSONObject()
-            jsonObject.parseCookie("$COOKIE_KEY_RIDI_RT=$RIDI_RT; Domain=; " +
+            jsonObject.addTokensFromCookie("$COOKIE_KEY_RIDI_RT=$RIDI_RT; Domain=; " +
                 "expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; Max-Age=2592000; Path=/; Secure")
             assertEquals(jsonObject.getString(COOKIE_KEY_RIDI_RT), RIDI_RT)
-            jsonObject.parseCookie(
+            jsonObject.addTokensFromCookie(
                 "$COOKIE_KEY_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
                     "Max-Age=3600; Path=/; Settings.Secure")
             assertEquals(jsonObject.getString(COOKIE_KEY_RIDI_AT), RIDI_AT)

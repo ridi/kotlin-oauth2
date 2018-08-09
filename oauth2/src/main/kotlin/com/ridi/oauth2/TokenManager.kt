@@ -18,6 +18,8 @@ class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: St
 
 class InvalidTokenFileException : Exception()
 
+class InvalidKeySizeException(override var message: String) : Exception()
+
 class TokenManager {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io/"
@@ -27,7 +29,7 @@ class TokenManager {
         internal const val COOKIE_KEY_RIDI_AT = "ridi-at"
         internal const val COOKIE_KEY_RIDI_RT = "ridi-rt"
 
-        internal fun JSONObject.parseCookie(cookieString: String) {
+        internal fun JSONObject.addTokensFromCookie(cookieString: String) {
             val cookie = cookieString.split("=", ";")
             val cookieKey = cookie[0]
             val cookieValue = cookie[1]
@@ -124,19 +126,24 @@ class TokenManager {
             jsonObject.getInt("exp"))
     }
 
+    private fun isTokenEncryptionKeyAvailable() = tokenEncryptionKey == null ||
+        tokenEncryptionKey!!.toByteArray(Charsets.UTF_8).size == 16
+
     private fun isAccessTokenExpired() =
         parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create { emitter ->
             if (tokenFile == null || clientId == null) {
-                emitter.publishError(IllegalStateException())
+                emitter.emitErrorIfNotDisposed(IllegalStateException())
+            } else if (isTokenEncryptionKeyAvailable().not()) {
+                emitter.emitErrorIfNotDisposed(InvalidKeySizeException("Unsupported key size. 16 Bytes are required"))
             } else if (tokenFile!!.exists().not()) {
                 requestAuthorization(emitter, redirectUri)
             } else if (isAccessTokenExpired()) {
                 refreshAccessToken(emitter)
             } else {
-                emitter.publishItem(parsedAccessToken!!)
+                emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
             }
         }
     }
@@ -147,7 +154,7 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
-                    emitter.publishError(t)
+                    emitter.emitErrorIfNotDisposed(t)
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
@@ -160,12 +167,12 @@ class TokenManager {
                         }
                         if (tokenCookies.size >= 2 &&
                             currentResponse.headers().values("Location")[0] == redirectUri) {
-                            emitter.publishItem(parsedAccessToken!!)
+                            emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
                             return
                         }
                         currentResponse = currentResponse.priorResponse()
                     }
-                    emitter.publishError(UnexpectedResponseException(response.code(),
+                    emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code(),
                         response.raw().request().url().toString()))
                 }
             })
@@ -176,26 +183,26 @@ class TokenManager {
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
-                    emitter.publishError(IllegalStateException(t))
+                    emitter.emitErrorIfNotDisposed(IllegalStateException(t))
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
                     clearTokens(false)
-                    emitter.publishItem(parsedAccessToken!!)
+                    emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
                 }
             })
     }
 
     private fun Call<ResponseBody>.requestUrlString() = request().url().toString()
 
-    private fun ObservableEmitter<JWT>.publishError(t: Throwable) {
+    private fun ObservableEmitter<JWT>.emitErrorIfNotDisposed(t: Throwable) {
         if (isDisposed.not()) {
             onError(t)
         }
     }
 
-    private fun ObservableEmitter<JWT>.publishItem(item: JWT) {
+    private fun ObservableEmitter<JWT>.emitItemAndCompleteIfNotDisposed(item: JWT) {
         if (isDisposed.not()) {
             onNext(item)
             onComplete()

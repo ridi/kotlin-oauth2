@@ -9,8 +9,6 @@ import javax.crypto.spec.SecretKeySpec
 private val ivSpec = IvParameterSpec(ByteArray(16))
 private val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
 
-// AES only supports key sizes of 16, 24 or 32 bytes
-
 internal fun String.encodeWithAES128(key: String?): String {
     if (key == null) {
         return this
@@ -20,8 +18,6 @@ internal fun String.encodeWithAES128(key: String?): String {
     cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivSpec)
     return encodeToString(cipher.doFinal(this.toByteArray(Charsets.UTF_8)), 0)
 }
-
-// AES only supports key sizes of 16, 24 or 32 bytes
 
 internal fun String.decodeWithAES128(key: String?): String {
     if (key == null) {
