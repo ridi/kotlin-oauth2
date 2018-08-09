@@ -19,7 +19,7 @@ class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: St
 
 class InvalidTokenFileException : Exception()
 
-class InvalidKeySizeException(override var message: String) : Exception()
+class InvalidTokenEncryptionKeyException(override var message: String) : Exception()
 
 class TokenManager {
     companion object {
@@ -138,7 +138,8 @@ class TokenManager {
             if (tokenFile == null || clientId == null) {
                 emitter.emitErrorIfNotDisposed(IllegalStateException())
             } else if (isTokenEncryptionKeyAvailable().not()) {
-                emitter.emitErrorIfNotDisposed(InvalidKeySizeException("Unsupported key size. 16 Bytes are required"))
+                emitter.emitErrorIfNotDisposed(InvalidTokenEncryptionKeyException(
+                    "Unsupported key size. 16 Bytes are required"))
             } else if (tokenFile!!.exists().not()) {
                 requestAuthorization(emitter, redirectUri)
             } else if (isAccessTokenExpired()) {
