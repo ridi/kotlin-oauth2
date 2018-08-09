@@ -13,9 +13,9 @@ import java.io.File
 import java.net.URI
 import java.util.Calendar
 
-data class JWT(var subject: String, var userIndex: Int, var expiresAt: Int)
+data class JWT(val subject: String, val userIndex: Int, val expiresAt: Int)
 
-class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: String) : Exception()
+class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: String) : RuntimeException()
 
 class InvalidTokenFileException : Exception()
 
@@ -127,8 +127,9 @@ class TokenManager {
             jsonObject.getInt("exp"))
     }
 
-    private fun isTokenEncryptionKeyAvailable() = tokenEncryptionKey == null ||
-        tokenEncryptionKey!!.toByteArray(Charsets.UTF_8).size == 16
+    private fun isTokenEncryptionKeyAvailable() = tokenEncryptionKey?.run {
+        toByteArray(Charsets.UTF_8).count() == 16
+    } != false
 
     private fun isAccessTokenExpired() =
         parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000

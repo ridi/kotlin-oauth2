@@ -96,10 +96,8 @@ class TokenManagerTest {
         tokenManager.tokenFile = tokenFile
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: RuntimeException) {
-            if (e is IllegalStateException) {
-                return
-            }
+        } catch (e: IllegalStateException) {
+            return
         }
         fail()
     }
@@ -111,10 +109,8 @@ class TokenManagerTest {
         tokenManager.sessionId = VALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: RuntimeException) {
-            if (e is IllegalStateException) {
-                return
-            }
+        } catch (e: IllegalStateException) {
+            return
         }
         fail()
     }
@@ -126,10 +122,8 @@ class TokenManagerTest {
         tokenManager.sessionId = INVALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: RuntimeException) {
-            if (e.cause is UnexpectedResponseException) {
-                return
-            }
+        } catch (e: UnexpectedResponseException) {
+            return
         }
         fail()
     }
