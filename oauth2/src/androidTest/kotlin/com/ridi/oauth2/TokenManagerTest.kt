@@ -96,9 +96,10 @@ class TokenManagerTest {
         tokenManager.tokenFile = tokenFile
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: IllegalStateException) {
-            assertEquals(e::class, IllegalStateException::class)
-            return
+        } catch (e: RuntimeException) {
+            if (e is IllegalStateException) {
+                return
+            }
         }
         fail()
     }
@@ -110,9 +111,10 @@ class TokenManagerTest {
         tokenManager.sessionId = VALID_SESSION_ID
         try {
             tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: IllegalStateException) {
-            assertEquals(e::class, IllegalStateException::class)
-            return
+        } catch (e: RuntimeException) {
+            if (e is IllegalStateException) {
+                return
+            }
         }
         fail()
     }
