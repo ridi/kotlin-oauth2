@@ -20,6 +20,7 @@ import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.io.File
 import java.net.HttpURLConnection
+import java.util.Date
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TokenManagerTest {
@@ -150,7 +151,7 @@ class TokenManagerTest {
         tokenManager.tokenFile = tokenFile
 
         tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
-            assertEquals(it.expiresAt, 0)
+            assertEquals(it.expiresAt, Date(0))
         }
     }
 

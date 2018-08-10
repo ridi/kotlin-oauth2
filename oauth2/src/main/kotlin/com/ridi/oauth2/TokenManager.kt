@@ -11,20 +11,22 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.net.URI
-import java.util.Calendar
+import java.util.Date
 
-data class JWT(val subject: String, val userIndex: Int, val expiresAt: Int)
+data class JWT(val subject: String, val userIndex: Int, val expiresAt: Date)
 
 class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: String) : RuntimeException()
 
-class InvalidTokenFileException : Exception()
+class InvalidTokenFileException : RuntimeException()
 
-class InvalidTokenEncryptionKeyException(override var message: String) : Exception()
+class InvalidTokenEncryptionKeyException(override var message: String) : RuntimeException()
 
 class TokenManager {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io/"
         private const val REAL_HOST = "account.ridibooks.com/"
+        private const val SECONDS_TO_MILLISECONDS = 1000
+
         internal var BASE_URL = "https://$REAL_HOST"
 
         internal const val COOKIE_KEY_RIDI_AT = "ridi-at"
@@ -124,21 +126,20 @@ class TokenManager {
         val jsonObject = JSONObject(String(Base64.decode(splitString[1], Base64.DEFAULT)))
         return JWT(jsonObject.getString("sub"),
             jsonObject.getInt("u_idx"),
-            jsonObject.getInt("exp"))
+            Date(jsonObject.getLong("exp") * SECONDS_TO_MILLISECONDS))
     }
 
-    private fun isTokenEncryptionKeyAvailable() = tokenEncryptionKey?.run {
+    private fun isTokenEncryptionKeyValid() = tokenEncryptionKey?.run {
         toByteArray(Charsets.UTF_8).count() == 16
     } != false
 
-    private fun isAccessTokenExpired() =
-        parsedAccessToken!!.expiresAt < Calendar.getInstance().timeInMillis / 1000
+    private fun isAccessTokenExpired() = parsedAccessToken!!.expiresAt.before(Date())
 
     fun getAccessToken(redirectUri: String): Observable<JWT> {
         return Observable.create { emitter ->
             if (tokenFile == null || clientId == null) {
                 emitter.emitErrorIfNotDisposed(IllegalStateException())
-            } else if (isTokenEncryptionKeyAvailable().not()) {
+            } else if (isTokenEncryptionKeyValid().not()) {
                 emitter.emitErrorIfNotDisposed(InvalidTokenEncryptionKeyException(
                     "Unsupported key size. 16 Bytes are required"))
             } else if (tokenFile!!.exists().not()) {
