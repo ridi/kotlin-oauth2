@@ -39,7 +39,7 @@ You should set some variables before `getAccessToken()` method is called.
 
 |Variables | Type | Description       |
 |-----------------------|-----------------------|---------------------------|
-|tokenEncryptionKey|String|Defaults to `null`. `TokenEncryptionKey` should be `16 bytes`|
+|tokenEncryptionKey|String|Defaults to `null`. `TokenEncryptionKey` should be 16 bytes long.|
 |tokenFile|String|The Location where you want to save a token file|
 |clientId|String|Client's identifier|
 |sessionId|String|Logged-in user's session value|
@@ -50,5 +50,5 @@ If you called `getAccessToken()`method successfully, you receive an access token
 |-------|------------|
 |UnexpectedResponseException|Access token is unavailable.|
 |InvalidTokenFileException|Token File is deleted or damaged.|
-|InvalidTokenEncryptionKeyException| `tokenEncryptionKey` is not 16 bytes.|
+|InvalidTokenEncryptionKeyException| `tokenEncryptionKey` is not 16 bytes long.|
 
