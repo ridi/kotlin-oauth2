@@ -39,10 +39,10 @@ You should set some variables before `getAccessToken()` method is called.
 
 |Variables | Type | Description       |
 |-----------------------|-----------------------|---------------------------|
-|tokenEncryptionKey|String|Defaults to `null`. You should set tokenEncryption Key `16 bytes`|
+|tokenEncryptionKey|String|Defaults to `null`. `TokenEncryptionKey` should be `16 bytes`|
 |tokenFile|String|The Location where you want to save a token file|
 |clientId|String|Client's identifier|
-|sessionId|String|Logged-in user's seesion value|
+|sessionId|String|Logged-in user's session value|
 
 If you called `getAccessToken()`method successfully, you receive an access token. Otherwise, you receive errors. 
 
