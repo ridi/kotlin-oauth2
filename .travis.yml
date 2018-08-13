@@ -19,14 +19,14 @@ android:
 
 before_script:
   - ./gradlew ktlint
+  - android list targets
   - echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
   - emulator -avd test -no-window &
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
 
 after_script:
-  - pwd
-  - cat android-oauth2/build/reports/androidTests/connected/*.html
+  - cat android-oauth2/android-oauth2/build/reports/androidTests/connected/*.html
 
 branches:
   except:
