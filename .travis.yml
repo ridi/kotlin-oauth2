@@ -26,7 +26,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 after_script:
-  - cat android-oauth2/android-oauth2/build/reports/androidTests/connected/*.html
+  - cat oauth2/build/reports/androidTests/connected/*.html
 
 branches:
   except:
