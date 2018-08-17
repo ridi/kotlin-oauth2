@@ -19,7 +19,6 @@ android:
 
 before_script:
   - ./gradlew ktlint
-  - android list targets
   - echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
   - emulator -avd test -no-window &
   - android-wait-for-emulator
@@ -28,6 +27,9 @@ before_script:
 after_script:
   - cat oauth2/build/reports/androidTests/connected/*.html
 
-branches:
-  except:
-    -master
+notifications:
+  email: false
+  slack:
+    rooms:
+      secure: KIbreFw7V+QKrudECTeVemGydGT1qA3AY9GKRsV5s1vSfqFrdkHeWUB6XCWfosvqdudINROHS3RQtjIGt7W1JSsUyO23VIufi+Dyvyp6uJi2zE3GVF33BD5eMc2thvhd0DE1gsYFI0I3MyzbMpYqE1SeNUAvIwYvnsE9W29OPNuTliC8GeBFw54RlEsVctziUzizBlcIho0yvA2WIe/gjgArstIxBznuSEBaCkH6dKSG8wy7UJsM+x2h/UV7Wli6g9LFfOyYuk/hn5jN3MJvAcHZHksdaAOE6hzfdd2sRGBWBgc7JIvtOT1zNkZEBDrvjRrkzVRIskKaNBdWXcrant8tRPwPDX/Vw1m7SAbmv0nru6wI8LkyrK9zfellJ+wJFHrxlIJ15QcHxlqxi35yb+VL3b6ZBzWqk8Rj8ZVzIq8+3imOSTU0ZoS/PlSY5QreJqGWvQpvEq+3455UoYHwMJgN4DlZ118KkPXfKvjSfyWLTNKnGtMNCbpv6jLf3IR/uTsz7teiwLNK/0s/E7MFGHGBMvoxHVospN3aFbLrSo0XblI+MZfktdz+SlHZJJgc/MmMl8T9obsuR+bC7zUYMKocwosqNmLRSI55g+wJ8ZpEc9CSbaetg/3UkB0uFBdfAV7SgUBcG7YS135ubMQhchjbSOllA5Y2nwx31SlnmDI=
+    on_success: change

@@ -1,18 +1,19 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion sdkVersion
+    buildToolsVersion rootProject.buildToolsVersion
+
     defaultConfig {
-        applicationId "com.ridi.ridi_oauth2_android"
-        minSdkVersion 16
-        targetSdkVersion 27
+        applicationId 'com.ridi.ridi_oauth2_android'
+        minSdkVersion rootProject.minSdkVersion
+        targetSdkVersion sdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName '1.0'
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -27,9 +28,7 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation project(':android-oauth2')
     implementation 'io.reactivex.rxjava2:rxjava:2.1.16'
-    testImplementation 'junit:junit:4.12'
-    implementation project(':oauth2')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
 }

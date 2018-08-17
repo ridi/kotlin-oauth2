@@ -1,1 +1,4 @@
-include ':demoapp', ':oauth2'
+include ':lib', 'demoapp'
+rootProject.children.each { module ->
+    module.name = module.name == 'lib' ? rootProject.name : module.name
+}
