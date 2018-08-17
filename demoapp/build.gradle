@@ -7,7 +7,7 @@ android {
     buildToolsVersion rootProject.buildToolsVersion
 
     defaultConfig {
-        applicationId 'com.ridi.ridi_oauth2_android'
+        applicationId 'com.ridi.oauth2.demoapp'
         minSdkVersion rootProject.minSdkVersion
         targetSdkVersion sdkVersion
         versionCode 1

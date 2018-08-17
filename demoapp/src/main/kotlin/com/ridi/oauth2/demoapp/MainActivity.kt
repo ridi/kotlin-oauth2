@@ -1,4 +1,4 @@
-package com.ridi.demoapp
+package com.ridi.oauth2.demoapp
 
 import android.app.Activity
 import android.content.Intent
@@ -7,7 +7,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Switch
 import android.widget.Toast
-import com.ridi.demoapp.TokenManager.tokenManager
+import com.ridi.oauth2.demoapp.TokenManager.tokenManager
 import com.ridi.oauth2.TokenManager
 import java.io.File
 

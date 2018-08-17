@@ -1,4 +1,4 @@
-package com.ridi.demoapp
+package com.ridi.oauth2.demoapp
 
 import android.annotation.TargetApi
 import android.app.Activity
@@ -8,13 +8,14 @@ import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.ridi.demoapp.TokenManager.tokenManager
+import com.ridi.oauth2.demoapp.TokenManager.tokenManager
 
 class WebViewActivity : Activity() {
-
-    private val DEV_HOST = "account.dev.ridi.io/"
-    private val REAL_HOST = "account.ridibooks.com/"
-    private val BASE_URL = if (tokenManager.useDevMode) "https://$DEV_HOST" else "https://$REAL_HOST"
+    companion object {
+        private const val DEV_HOST = "account.dev.ridi.io/"
+        private const val REAL_HOST = "account.ridibooks.com/"
+        private val BASE_URL = if (tokenManager.useDevMode) "https://$DEV_HOST" else "https://$REAL_HOST"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
