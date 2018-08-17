@@ -25,7 +25,7 @@ before_script:
   - adb shell input keyevent 82 &
 
 after_script:
-  - cat oauth2/build/reports/androidTests/connected/*.html
+  - cat lib/build/reports/androidTests/connected/*.html
 
 notifications:
   email: false
