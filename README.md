@@ -1,5 +1,8 @@
 # android-oauth2
 
+[![Build Status](https://travis-ci.org/ridi/android-oauth2.svg?branch=master)](https://travis-ci.org/ridi/android-oauth2)
+[![Release](https://jitpack.io/v/ridi/android-oauth2.svg)](https://jitpack.io/#ridi/android-oauth2)
+
 Convenient oauth2 library for Android platform
 
 ## Getting started
@@ -21,7 +24,7 @@ Then you can include this library by adding dependency script to build.gradle fi
 ```
 dependencies {
     ...
-    implementation 'com.github.ridi:oauth2:<version>'
+    implementation 'com.github.ridi:android-oauth2:<version>'
     ...
 }
 ```
