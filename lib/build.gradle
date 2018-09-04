@@ -20,7 +20,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'kotlin-android'
 
 group = 'com.github.ridi'
-version = '1.0.0'
+version = '1.1.0'
 
 android {
     compileSdkVersion sdkVersion
