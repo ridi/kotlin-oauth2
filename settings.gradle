@@ -1,4 +1,1 @@
-include ':lib', 'demoapp'
-rootProject.children.each { module ->
-    module.name = module.name == 'lib' ? rootProject.name : module.name
-}
+include ':library', ':demoapp'
