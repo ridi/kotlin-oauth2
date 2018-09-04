@@ -1,7 +1,3 @@
-apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'kotlin-android'
-
 buildscript {
     repositories {
         jcenter()
@@ -18,6 +14,10 @@ repositories {
     jcenter()
     maven { url 'https://jitpack.io' }
 }
+
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'kotlin-android'
 
 group = 'com.github.ridi'
 version = '1.0.0'
