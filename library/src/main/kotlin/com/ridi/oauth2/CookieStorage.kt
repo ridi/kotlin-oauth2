@@ -1,6 +1,5 @@
 package com.ridi.oauth2
 
-import android.webkit.CookieManager
 import com.ridi.books.helper.io.saveToFile
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -9,36 +8,35 @@ import org.json.JSONObject
 import java.io.File
 
 internal class CookieStorage : CookieJar {
-    var tokenFile: File? = null
+    var phpSessionId = ""
+    lateinit var tokenFile: File
     var tokenEncryptionKey: String? = null
-    private val cookieManager = CookieManager.getInstance()
 
-    override fun loadForRequest(url: HttpUrl): MutableList<Cookie> {
-        val cookies = ArrayList<Cookie>()
-        if (cookieManager.getCookie(url.toString()) != null) {
-            val splitCookies = cookieManager.getCookie(url.toString()).split("[,;]".toRegex())
-                .dropLastWhile { it.isEmpty() }
-            splitCookies.forEach {
-                cookies.add(Cookie.parse(url, it.trim())!!)
-            }
-        }
-        return cookies
-    }
+    private val savedCookies = mutableListOf<Cookie>()
 
-    override fun saveFromResponse(url: HttpUrl?, cookies: MutableList<Cookie>) {
+    override fun loadForRequest(url: HttpUrl) =
+        savedCookies + listOf(Cookie.parse(url, "$PHP_SESSION_ID_COOKIE_NAME=$phpSessionId")!!)
+
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        savedCookies.addAll(cookies)
+
         val tokenJSON = JSONObject()
         cookies.forEach { cookie ->
-            cookieManager.setCookie(url.toString(), cookie.toString())
             TokenManager.run {
-                tokenJSON.addTokensFromCookie(cookie.toString())
+                tokenJSON.addTokensFromCookie(cookie)
             }
         }
-        if (tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_KEY_RIDI_RT)) {
-            tokenJSON.toString().encodeWithAES128(tokenEncryptionKey).saveToFile(tokenFile!!)
+
+        if (tokenJSON.has(TokenManager.COOKIE_NAME_RIDI_AT) && tokenJSON.has(TokenManager.COOKIE_NAME_RIDI_RT)) {
+            tokenJSON.toString().encodeWithAES128(tokenEncryptionKey).saveToFile(tokenFile)
         }
     }
 
-    fun removeCookiesInUrl(url: String) {
-        cookieManager.setCookie(url, "")
+    fun clear() {
+        savedCookies.clear()
+    }
+
+    companion object {
+        private const val PHP_SESSION_ID_COOKIE_NAME = "PHPSESSID"
     }
 }

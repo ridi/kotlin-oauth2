@@ -1,9 +1,11 @@
 package com.ridi.oauth2
 
+import android.support.annotation.VisibleForTesting
 import android.util.Base64
 import com.ridi.books.helper.io.loadObject
 import io.reactivex.Observable
 import io.reactivex.ObservableEmitter
+import okhttp3.Cookie
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Call
@@ -23,26 +25,29 @@ class InvalidTokenEncryptionKeyException(override var message: String) : Runtime
 
 class TokenManager {
     companion object {
-        private const val DEV_HOST = "account.dev.ridi.io/"
-        private const val REAL_HOST = "account.ridibooks.com/"
+        private const val DEV_HOST = "account.dev.ridi.io"
+        private const val REAL_HOST = "account.ridibooks.com"
         private const val SECONDS_TO_MILLISECONDS = 1000
 
-        internal var BASE_URL = "https://$REAL_HOST"
+        internal const val COOKIE_NAME_RIDI_AT = "ridi-at"
+        internal const val COOKIE_NAME_RIDI_RT = "ridi-rt"
 
-        internal const val COOKIE_KEY_RIDI_AT = "ridi-at"
-        internal const val COOKIE_KEY_RIDI_RT = "ridi-rt"
-
-        internal fun JSONObject.addTokensFromCookie(cookieString: String) {
-            val cookie = cookieString.split("=", ";")
-            val cookieKey = cookie[0]
-            val cookieValue = cookie[1]
-            if (cookieKey == COOKIE_KEY_RIDI_AT || cookieKey == COOKIE_KEY_RIDI_RT) {
-                put(cookieKey, cookieValue)
+        internal fun JSONObject.addTokensFromCookie(cookie: Cookie) {
+            val name = cookie.name()
+            if (name == COOKIE_NAME_RIDI_AT || name == COOKIE_NAME_RIDI_RT) {
+                put(name, cookie.value())
             }
         }
     }
 
-    private var apiManager = ApiManager()
+    @VisibleForTesting
+    internal var baseUrl = "https://$REAL_HOST/"
+        set(value) {
+            field = value
+            apiManager = ApiManager(value)
+        }
+
+    private var apiManager = ApiManager(baseUrl)
 
     var clientId: String? = null
         set(value) {
@@ -54,15 +59,14 @@ class TokenManager {
         set(value) {
             clearTokens()
             field = value
-            apiManager.cookieStorage.tokenFile = value
+            value?.let { apiManager.cookieStorage.tokenFile = it }
         }
 
     var useDevMode: Boolean = false
         set(value) {
             field = value
             clearTokens()
-            BASE_URL = "https://" + if (value) DEV_HOST else REAL_HOST
-            apiManager = ApiManager()
+            baseUrl = "https://${if (value) DEV_HOST else REAL_HOST}/"
         }
 
     var tokenEncryptionKey: String? = null
@@ -75,6 +79,7 @@ class TokenManager {
     var sessionId = ""
         set(value) {
             field = value
+            apiManager.cookieStorage.phpSessionId = value
             clearTokens()
         }
 
@@ -95,16 +100,16 @@ class TokenManager {
 
     private var rawAccessToken: String? = null
         get() {
-            if (field == null && getSavedJSON().has(COOKIE_KEY_RIDI_AT)) {
-                field = getSavedJSON().getString(COOKIE_KEY_RIDI_AT)
+            if (field == null && getSavedJSON().has(COOKIE_NAME_RIDI_AT)) {
+                field = getSavedJSON().getString(COOKIE_NAME_RIDI_AT)
             }
             return field
         }
 
     private var refreshToken: String? = null
         get() {
-            if (field == null && getSavedJSON().has(COOKIE_KEY_RIDI_RT)) {
-                field = getSavedJSON().getString(COOKIE_KEY_RIDI_RT)
+            if (field == null && getSavedJSON().has(COOKIE_NAME_RIDI_RT)) {
+                field = getSavedJSON().getString(COOKIE_NAME_RIDI_RT)
             }
             return field
         }
@@ -153,21 +158,20 @@ class TokenManager {
     }
 
     private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
-        val sessionCookie = "PHPSESSID=$sessionId;"
-        apiManager.service.requestAuthorization(sessionCookie, clientId!!, "code", redirectUri)
+        apiManager.service.requestAuthorization(/*sessionCookie, */clientId!!, "code", redirectUri)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
+                    apiManager.cookieStorage.clear()
                     emitter.emitErrorIfNotDisposed(t)
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
+                    apiManager.cookieStorage.clear()
                     var currentResponse = response.raw()
 
                     while (currentResponse != null && emitter.isDisposed.not()) {
                         val tokenCookies = currentResponse.headers().values("Set-Cookie").filter {
-                            it.startsWith(COOKIE_KEY_RIDI_AT) || it.startsWith(COOKIE_KEY_RIDI_RT)
+                            it.startsWith(COOKIE_NAME_RIDI_AT) || it.startsWith(COOKIE_NAME_RIDI_RT)
                         }
                         if (tokenCookies.size >= 2 &&
                             currentResponse.headers().values("Location")[0].normalizedURI()
@@ -187,19 +191,17 @@ class TokenManager {
         apiManager.service.refreshAccessToken(rawAccessToken!!, refreshToken!!)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
+                    apiManager.cookieStorage.clear()
                     emitter.emitErrorIfNotDisposed(IllegalStateException(t))
                 }
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    apiManager.cookieStorage.removeCookiesInUrl(call.requestUrlString())
+                    apiManager.cookieStorage.clear()
                     clearTokens(false)
                     emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
                 }
             })
     }
-
-    private fun Call<ResponseBody>.requestUrlString() = request().url().toString()
 
     private fun ObservableEmitter<JWT>.emitErrorIfNotDisposed(t: Throwable) {
         if (isDisposed.not()) {

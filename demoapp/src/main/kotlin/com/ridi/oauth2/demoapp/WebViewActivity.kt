@@ -1,11 +1,8 @@
 package com.ridi.oauth2.demoapp
 
-import android.annotation.TargetApi
 import android.app.Activity
-import android.os.Build
 import android.os.Bundle
 import android.webkit.CookieManager
-import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.ridi.oauth2.demoapp.TokenManager.tokenManager
@@ -23,26 +20,12 @@ class WebViewActivity : Activity() {
 
         val webView = findViewById<WebView>(R.id.webView)
         webView.webViewClient = object : WebViewClient() {
-
-            @Suppress("OverridingDeprecatedMember")
-            override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                view.loadUrl(url)
-                @Suppress("DEPRECATION")
-                return super.shouldOverrideUrlLoading(view, url)
-            }
-
-            @TargetApi(Build.VERSION_CODES.N)
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                view.loadUrl(request.url.toString())
-                return true
-            }
-
             override fun onPageFinished(view: WebView, url: String) {
                 val totalCookies = CookieManager.getInstance().getCookie(url)
                 if (totalCookies != null) {
                     val splitCookies = totalCookies.split(";")
                     splitCookies.forEach { cookie ->
-                        val keyValue = cookie.split("=")
+                        val keyValue = cookie.trim().split("=")
                         if (keyValue[0] == "PHPSESSID") {
                             tokenManager.sessionId = keyValue[1]
                         }

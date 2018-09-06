@@ -1,11 +1,9 @@
 package com.ridi.oauth2
 
-import android.content.Context
 import android.support.test.InstrumentationRegistry
-import android.webkit.CookieManager
 import com.ridi.books.helper.io.saveToFile
-import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_AT
-import com.ridi.oauth2.TokenManager.Companion.COOKIE_KEY_RIDI_RT
+import okhttp3.Cookie
+import okhttp3.HttpUrl
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -15,18 +13,12 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
-import org.junit.FixMethodOrder
 import org.junit.Test
-import org.junit.runners.MethodSorters
 import java.io.File
 import java.net.HttpURLConnection
 import java.util.Date
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class TokenManagerTest {
-    private lateinit var mockWebServer: MockWebServer
-    private lateinit var context: Context
-
     companion object {
         private const val VALID_SESSION_ID = "1"
         private const val INVALID_SESSION_ID = "2"
@@ -42,50 +34,51 @@ class TokenManagerTest {
         private const val RIDI_RT = "NHiVQz0ECBzlyI1asqsK6pfp32zvLD"
     }
 
-    private var tokenFile: File? = null
+    private lateinit var mockWebServer: MockWebServer
     private lateinit var tokenManager: TokenManager
+    private lateinit var tokenFile: File
 
     @Before
     fun setUp() {
-        mockWebServer = MockWebServer()
-        mockWebServer.start()
-        TokenManager.BASE_URL = mockWebServer.url("/").toString()
-        mockWebServer.setDispatcher(dispatcher)
+        mockWebServer = MockWebServer().apply {
+            start()
+            setDispatcher(object : Dispatcher() {
+                @Throws(InterruptedException::class)
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    val url = request.requestUrl.toString()
+                    val atCookie = "${TokenManager.COOKIE_NAME_RIDI_AT}=$RIDI_AT_EXPIRES_AT_ZERO;"
+                    val rtCookie = "${TokenManager.COOKIE_NAME_RIDI_RT}=$RIDI_RT;"
 
-        context = InstrumentationRegistry.getContext()
-        tokenFile = File(context.filesDir.absolutePath + "/tokenTest.json")
-        if (tokenFile!!.exists()) {
-            tokenFile!!.delete()
-        }
-        tokenManager = TokenManager()
-        CookieManager.getInstance().removeAllCookies(null)
-    }
-
-    private val dispatcher: Dispatcher = object : Dispatcher() {
-        @Throws(InterruptedException::class)
-        override fun dispatch(request: RecordedRequest): MockResponse {
-            val url = request.requestUrl.toString()
-            val atCookie = "$COOKIE_KEY_RIDI_AT=$RIDI_AT_EXPIRES_AT_ZERO;"
-            val rtCookie = "$COOKIE_KEY_RIDI_RT=$RIDI_RT;"
-
-            return if (url.contains("ridi/authorize")) {
-                MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP).run {
-                    if (request.headers.values("Cookie")[0] == "PHPSESSID=$INVALID_SESSION_ID;") {
-                        setHeader("Location", LOGIN_PAGE)
+                    return if (url.contains("ridi/authorize")) {
+                        MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP).run {
+                            if (request.headers.values("Cookie").contains("PHPSESSID=$INVALID_SESSION_ID")) {
+                                setHeader("Location", LOGIN_PAGE)
+                            } else {
+                                setHeader("Location", APP_AUTHORIZED)
+                                addHeader("Set-Cookie", atCookie)
+                                addHeader("Set-Cookie", rtCookie)
+                            }
+                        }
+                    } else if (url.contains(LOGIN_PAGE) || url.contains(APP_AUTHORIZED)) {
+                        MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
+                    } else if (url.contains("ridi/token")) {
+                        MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
+                            .addHeader("Set-Cookie", atCookie)
+                            .addHeader("Set-Cookie", rtCookie)
                     } else {
-                        setHeader("Location", APP_AUTHORIZED)
-                        addHeader("Set-Cookie", atCookie)
-                        addHeader("Set-Cookie", rtCookie)
+                        MockResponse().setResponseCode(HttpURLConnection.HTTP_FORBIDDEN)
                     }
                 }
-            } else if (url.contains(LOGIN_PAGE) || url.contains(APP_AUTHORIZED)) {
-                MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
-            } else if (url.contains("ridi/token")) {
-                MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
-                    .addHeader("Set-Cookie", atCookie)
-                    .addHeader("Set-Cookie", rtCookie)
-            } else {
-                MockResponse().setResponseCode(HttpURLConnection.HTTP_FORBIDDEN)
+            })
+        }
+
+        tokenManager = TokenManager().apply {
+            baseUrl = mockWebServer.url("/").toString()
+        }
+
+        tokenFile = File(InstrumentationRegistry.getContext().filesDir.absolutePath, "tokenTest.json").apply {
+            if (exists()) {
+                delete()
             }
         }
     }
@@ -144,10 +137,10 @@ class TokenManagerTest {
         tokenManager.clientId = CLIENT_ID
         tokenManager.sessionId = VALID_SESSION_ID
 
-        val testJSON = JSONObject()
-        testJSON.put(COOKIE_KEY_RIDI_AT, RIDI_AT)
-        testJSON.put(COOKIE_KEY_RIDI_RT, RIDI_RT)
-        testJSON.toString().saveToFile(tokenFile!!)
+        JSONObject()
+            .put(TokenManager.COOKIE_NAME_RIDI_AT, RIDI_AT)
+            .put(TokenManager.COOKIE_NAME_RIDI_RT, RIDI_RT)
+            .toString().saveToFile(tokenFile!!)
         tokenManager.tokenFile = tokenFile
 
         tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
@@ -159,13 +152,14 @@ class TokenManagerTest {
     fun checkCookieParsing() {
         TokenManager.run {
             val jsonObject = JSONObject()
-            jsonObject.addTokensFromCookie("$COOKIE_KEY_RIDI_RT=$RIDI_RT; Domain=; " +
-                "expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; Max-Age=2592000; Path=/; Secure")
-            assertEquals(jsonObject.getString(COOKIE_KEY_RIDI_RT), RIDI_RT)
-            jsonObject.addTokensFromCookie(
-                "$COOKIE_KEY_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
-                    "Max-Age=3600; Path=/; Settings.Secure")
-            assertEquals(jsonObject.getString(COOKIE_KEY_RIDI_AT), RIDI_AT)
+            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(tokenManager.baseUrl)!!,
+                "$COOKIE_NAME_RIDI_RT=$RIDI_RT; Domain=; expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; " +
+                    "Max-Age=2592000; Path=/; Secure")!!)
+            assertEquals(jsonObject.getString(COOKIE_NAME_RIDI_RT), RIDI_RT)
+            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(tokenManager.baseUrl)!!,
+                "$COOKIE_NAME_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
+                    "Max-Age=3600; Path=/; Settings.Secure")!!)
+            assertEquals(jsonObject.getString(COOKIE_NAME_RIDI_AT), RIDI_AT)
         }
     }
 
