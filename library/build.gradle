@@ -27,6 +27,7 @@ android {
 dependencies {
     api 'io.reactivex.rxjava2:rxjava:2.2.1'
 
+    implementation 'com.android.support:support-annotations:27.1.1'
     implementation 'com.github.ridi:rbhelper-android:1.2.5'
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
     implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
