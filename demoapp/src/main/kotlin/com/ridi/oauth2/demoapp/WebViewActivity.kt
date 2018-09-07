@@ -1,17 +1,17 @@
 package com.ridi.oauth2.demoapp
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.ridi.oauth2.demoapp.TokenManager.tokenManager
 
+@SuppressLint("SetJavaScriptEnabled")
 class WebViewActivity : Activity() {
     companion object {
-        private const val DEV_HOST = "account.dev.ridi.io/"
-        private const val REAL_HOST = "account.ridibooks.com/"
-        private val BASE_URL = if (tokenManager.useDevMode) "https://$DEV_HOST" else "https://$REAL_HOST"
+        private const val DEV_HOST = "dev.ridi.io"
+        private const val REAL_HOST = "ridibooks.com"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,13 +27,15 @@ class WebViewActivity : Activity() {
                     splitCookies.forEach { cookie ->
                         val keyValue = cookie.trim().split("=")
                         if (keyValue[0] == "PHPSESSID") {
-                            tokenManager.sessionId = keyValue[1]
+                            DemoAppApplication.tokenManager.phpSessionId = keyValue[1]
                         }
                     }
                 }
             }
         }
         webView.settings.javaScriptEnabled = true
-        webView.loadUrl(BASE_URL)
+
+        val url = "https://${if (DemoAppApplication.isDevMode) DEV_HOST else REAL_HOST}/account/login"
+        webView.loadUrl(url)
     }
 }

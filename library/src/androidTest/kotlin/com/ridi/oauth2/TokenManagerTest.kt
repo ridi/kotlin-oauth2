@@ -23,7 +23,6 @@ class TokenManagerTest {
         private const val VALID_SESSION_ID = "1"
         private const val INVALID_SESSION_ID = "2"
         private const val CLIENT_ID = "3"
-        private const val APP_AUTHORIZED = "app_authorized"
         private const val LOGIN_PAGE = "login?return_url=login_required"
         private const val RIDI_AT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJBbmRyb2lkS2ltIiwidV9pZHg" +
             "iOjI2Mjc5MjUsImV4cCI6MTUzMDc2MTcwNywiY2xpZW50X2lkIjoiTmt0MlhkYzB6TXVXbXllNk1Ta1lncUNoOXE2SmplTUN" +
@@ -35,8 +34,9 @@ class TokenManagerTest {
     }
 
     private lateinit var mockWebServer: MockWebServer
+    private lateinit var apiBaseUrl: String
+    private lateinit var tokenSaveFile: File
     private lateinit var tokenManager: TokenManager
-    private lateinit var tokenFile: File
 
     @Before
     fun setUp() {
@@ -54,12 +54,12 @@ class TokenManagerTest {
                             if (request.headers.values("Cookie").contains("PHPSESSID=$INVALID_SESSION_ID")) {
                                 setHeader("Location", LOGIN_PAGE)
                             } else {
-                                setHeader("Location", APP_AUTHORIZED)
+                                setHeader("Location", TokenManager.AUTHORIZATION_REDIRECT_URI)
                                 addHeader("Set-Cookie", atCookie)
                                 addHeader("Set-Cookie", rtCookie)
                             }
                         }
-                    } else if (url.contains(LOGIN_PAGE) || url.contains(APP_AUTHORIZED)) {
+                    } else if (url.contains(LOGIN_PAGE) || url.contains(TokenManager.AUTHORIZATION_REDIRECT_URI)) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
                     } else if (url.contains("ridi/token")) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
@@ -71,96 +71,60 @@ class TokenManagerTest {
                 }
             })
         }
-
-        tokenManager = TokenManager().apply {
-            baseUrl = mockWebServer.url("/").toString()
-        }
-
-        tokenFile = File(InstrumentationRegistry.getContext().filesDir.absolutePath, "tokenTest.json").apply {
+        apiBaseUrl = mockWebServer.url("/").toString()
+        tokenSaveFile = File(InstrumentationRegistry.getContext().filesDir, "tokenTest.json").apply {
             if (exists()) {
                 delete()
             }
         }
+        tokenManager = TokenManager(apiBaseUrl, CLIENT_ID, tokenSaveFile)
     }
 
     @Test
-    fun needClientId() {
-        tokenManager.clientId = null
-        tokenManager.sessionId = VALID_SESSION_ID
-        tokenManager.tokenFile = tokenFile
-        try {
-            tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: IllegalStateException) {
-            return
-        }
-        fail()
-    }
-
-    @Test
-    fun needTokenFile() {
-        tokenManager.clientId = CLIENT_ID
-        tokenManager.tokenFile = null
-        tokenManager.sessionId = VALID_SESSION_ID
-        try {
-            tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: IllegalStateException) {
-            return
-        }
-        fail()
-    }
-
-    @Test
-    fun returnLoginURL() {
-        tokenManager.clientId = CLIENT_ID
-        tokenManager.tokenFile = tokenFile
-        tokenManager.sessionId = INVALID_SESSION_ID
-        try {
-            tokenManager.getAccessToken(APP_AUTHORIZED).blockingSingle()
-        } catch (e: UnexpectedResponseException) {
-            return
-        }
-        fail()
-    }
-
-    @Test
-    fun workProperly() {
-        tokenManager.clientId = CLIENT_ID
-        tokenManager.sessionId = VALID_SESSION_ID
-        tokenManager.tokenFile = tokenFile
-        tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
+    fun testAcquiringAccessToken() {
+        tokenManager.getAccessToken().blockingForEach {
             assertEquals(it.subject, "AndroidKim")
         }
     }
 
     @Test
-    fun refreshToken() {
-        tokenManager.clientId = CLIENT_ID
-        tokenManager.sessionId = VALID_SESSION_ID
+    fun testTokenRefresh() {
+        tokenManager.phpSessionId = VALID_SESSION_ID
 
         JSONObject()
             .put(TokenManager.COOKIE_NAME_RIDI_AT, RIDI_AT)
             .put(TokenManager.COOKIE_NAME_RIDI_RT, RIDI_RT)
-            .toString().saveToFile(tokenFile!!)
-        tokenManager.tokenFile = tokenFile
+            .toString().saveToFile(tokenSaveFile)
 
-        tokenManager.getAccessToken(APP_AUTHORIZED).blockingForEach {
+        tokenManager.getAccessToken().blockingForEach {
             assertEquals(it.expiresAt, Date(0))
         }
     }
 
     @Test
-    fun checkCookieParsing() {
+    fun testCookieParsing() {
         TokenManager.run {
             val jsonObject = JSONObject()
-            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(tokenManager.baseUrl)!!,
+            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(apiBaseUrl)!!,
                 "$COOKIE_NAME_RIDI_RT=$RIDI_RT; Domain=; expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; " +
                     "Max-Age=2592000; Path=/; Secure")!!)
             assertEquals(jsonObject.getString(COOKIE_NAME_RIDI_RT), RIDI_RT)
-            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(tokenManager.baseUrl)!!,
+            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(apiBaseUrl)!!,
                 "$COOKIE_NAME_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
                     "Max-Age=3600; Path=/; Settings.Secure")!!)
             assertEquals(jsonObject.getString(COOKIE_NAME_RIDI_AT), RIDI_AT)
         }
+    }
+
+    @Test
+    fun testRedirectingToLoginPage() {
+        tokenManager.phpSessionId = INVALID_SESSION_ID
+        try {
+            tokenManager.getAccessToken().blockingSingle()
+        } catch (e: UnexpectedResponseException) {
+            return
+        }
+        fail()
     }
 
     @After

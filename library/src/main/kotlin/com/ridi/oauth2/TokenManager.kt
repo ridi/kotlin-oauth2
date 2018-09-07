@@ -12,7 +12,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
-import java.net.URI
+import java.net.HttpURLConnection
 import java.util.Date
 
 data class JWT(val subject: String, val userIndex: Int, val expiresAt: Date)
@@ -21,13 +21,14 @@ class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: St
 
 class InvalidTokenFileException : RuntimeException()
 
-class InvalidTokenEncryptionKeyException(override var message: String) : RuntimeException()
+class InvalidTokenEncryptionKeyException(message: String) : RuntimeException(message)
 
 class TokenManager {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io"
         private const val REAL_HOST = "account.ridibooks.com"
         private const val SECONDS_TO_MILLISECONDS = 1000
+        internal const val AUTHORIZATION_REDIRECT_URI = "app://authorized"
 
         internal const val COOKIE_NAME_RIDI_AT = "ridi-at"
         internal const val COOKIE_NAME_RIDI_RT = "ridi-rt"
@@ -40,45 +41,36 @@ class TokenManager {
         }
     }
 
+    private val clientId: String
+    private val tokenSaveFile: File
+    private val tokenSaveEncryptionKey: String?
+    private val apiManager: ApiManager
+
+    constructor(
+        clientId: String,
+        tokenSaveFile: File,
+        tokenSaveEncryptionKey: String? = null,
+        devMode: Boolean = false
+    ) : this("https://${if (devMode) DEV_HOST else REAL_HOST}/", clientId, tokenSaveFile, tokenSaveEncryptionKey)
+
     @VisibleForTesting
-    internal var baseUrl = "https://$REAL_HOST/"
-        set(value) {
-            field = value
-            apiManager = ApiManager(value)
+    internal constructor(
+        baseUrl: String,
+        clientId: String,
+        tokenSaveFile: File,
+        tokenSaveEncryptionKey: String? = null
+    ) {
+        this.clientId = clientId
+        this.tokenSaveFile = tokenSaveFile
+        this.tokenSaveEncryptionKey = tokenSaveEncryptionKey
+        apiManager = ApiManager(baseUrl).apply {
+            cookieStorage.tokenFile = tokenSaveFile
+            cookieStorage.tokenEncryptionKey = tokenSaveEncryptionKey
         }
+    }
 
-    private var apiManager = ApiManager(baseUrl)
-
-    var clientId: String? = null
+    var phpSessionId = ""
         set(value) {
-            field = value
-            clearTokens()
-        }
-
-    var tokenFile: File? = null
-        set(value) {
-            clearTokens()
-            field = value
-            value?.let { apiManager.cookieStorage.tokenFile = it }
-        }
-
-    var useDevMode: Boolean = false
-        set(value) {
-            field = value
-            clearTokens()
-            baseUrl = "https://${if (value) DEV_HOST else REAL_HOST}/"
-        }
-
-    var tokenEncryptionKey: String? = null
-        set(value) {
-            field = value
-            apiManager.cookieStorage.tokenEncryptionKey = value
-            clearTokens()
-        }
-
-    var sessionId = ""
-        set(value) {
-            field = value
             apiManager.cookieStorage.phpSessionId = value
             clearTokens()
         }
@@ -87,14 +79,14 @@ class TokenManager {
         rawAccessToken = null
         refreshToken = null
         parsedAccessToken = null
-        if (tokenFile != null && tokenFile!!.exists() && isDeletingTokenFileNeeded) {
-            tokenFile!!.delete()
+        if (tokenSaveFile.exists() && isDeletingTokenFileNeeded) {
+            tokenSaveFile.delete()
         }
     }
 
     private fun getSavedJSON(): JSONObject {
-        tokenFile!!.loadObject<String>()?.let { tokenString ->
-            return JSONObject(tokenString.decodeWithAES128(tokenEncryptionKey))
+        tokenSaveFile.loadObject<String>()?.let { tokenString ->
+            return JSONObject(tokenString.decodeWithAES128(tokenSaveEncryptionKey))
         } ?: throw InvalidTokenFileException()
     }
 
@@ -134,31 +126,27 @@ class TokenManager {
             Date(jsonObject.getLong("exp") * SECONDS_TO_MILLISECONDS))
     }
 
-    private fun isTokenEncryptionKeyValid() = tokenEncryptionKey?.run {
+    private fun isTokenEncryptionKeyValid() = tokenSaveEncryptionKey?.run {
         toByteArray(Charsets.UTF_8).count() == 16
     } != false
 
     private fun isAccessTokenExpired() = parsedAccessToken!!.expiresAt.before(Date())
 
-    fun getAccessToken(redirectUri: String): Observable<JWT> {
+    fun getAccessToken(): Observable<JWT> {
         return Observable.create { emitter ->
-            if (tokenFile == null || clientId == null) {
-                emitter.emitErrorIfNotDisposed(IllegalStateException())
-            } else if (isTokenEncryptionKeyValid().not()) {
-                emitter.emitErrorIfNotDisposed(InvalidTokenEncryptionKeyException(
-                    "Unsupported key size. 16 Bytes are required"))
-            } else if (tokenFile!!.exists().not()) {
-                requestAuthorization(emitter, redirectUri)
-            } else if (isAccessTokenExpired()) {
-                refreshAccessToken(emitter)
-            } else {
-                emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
+            when {
+                isTokenEncryptionKeyValid().not() ->
+                    emitter.emitErrorIfNotDisposed(
+                        InvalidTokenEncryptionKeyException("Unsupported key size. 16 Bytes are required"))
+                tokenSaveFile.exists().not() -> requestAuthorization(emitter)
+                isAccessTokenExpired() -> refreshAccessToken(emitter)
+                else -> emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
             }
         }
     }
 
-    private fun requestAuthorization(emitter: ObservableEmitter<JWT>, redirectUri: String) {
-        apiManager.service.requestAuthorization(/*sessionCookie, */clientId!!, "code", redirectUri)
+    private fun requestAuthorization(emitter: ObservableEmitter<JWT>) {
+        apiManager.service.requestAuthorization(clientId, "code", AUTHORIZATION_REDIRECT_URI)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     apiManager.cookieStorage.clear()
@@ -167,22 +155,14 @@ class TokenManager {
 
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     apiManager.cookieStorage.clear()
-                    var currentResponse = response.raw()
 
-                    while (currentResponse != null && emitter.isDisposed.not()) {
-                        val tokenCookies = currentResponse.headers().values("Set-Cookie").filter {
-                            it.startsWith(COOKIE_NAME_RIDI_AT) || it.startsWith(COOKIE_NAME_RIDI_RT)
-                        }
-                        if (tokenCookies.size >= 2 &&
-                            currentResponse.headers().values("Location")[0].normalizedURI()
-                            == redirectUri.normalizedURI()) {
-                            emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
-                            return
-                        }
-                        currentResponse = currentResponse.priorResponse()
+                    if (emitter.isDisposed.not() && response.code() == HttpURLConnection.HTTP_MOVED_TEMP &&
+                        response.headers().values("Location").firstOrNull() == AUTHORIZATION_REDIRECT_URI) {
+                        emitter.emitItemAndCompleteIfNotDisposed(parsedAccessToken!!)
+                    } else {
+                        emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code(),
+                            response.raw().request().url().toString()))
                     }
-                    emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code(),
-                        response.raw().request().url().uri().normalize().toString()))
                 }
             })
     }
@@ -215,6 +195,4 @@ class TokenManager {
             onComplete()
         }
     }
-
-    private fun String.normalizedURI() = URI(this).normalize()
 }
