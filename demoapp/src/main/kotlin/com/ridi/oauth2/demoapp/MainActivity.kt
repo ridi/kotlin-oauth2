@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Switch
 import android.widget.Toast
+import com.auth0.android.jwt.JWT
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,12 +24,14 @@ class MainActivity : Activity() {
         }
 
         findViewById<Button>(R.id.access_token_button).setOnClickListener {
-            DemoAppApplication.tokenManager.getAccessToken().subscribe({
-                Toast.makeText(this, "Received => $it", Toast.LENGTH_SHORT).show()
-                Log.e(javaClass.name, "Received => $it")
-            }, {
-                Toast.makeText(this, "Error => $it", Toast.LENGTH_SHORT).show()
-                Log.e(javaClass.name, "Error => $it")
+            DemoAppApplication.tokenManager.requestRidiAuthorization(DemoAppApplication.phpSessionId).subscribe({
+                val jwt = JWT(it.accessToken)
+                val description =
+                    "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
+                Toast.makeText(this, "Received => $description", Toast.LENGTH_SHORT).show()
+            }, { t ->
+                Toast.makeText(this, "Error => $t", Toast.LENGTH_SHORT).show()
+                Log.e(javaClass.name, t.message, t)
             })
         }
 

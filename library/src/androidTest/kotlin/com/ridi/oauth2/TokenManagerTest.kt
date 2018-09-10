@@ -1,20 +1,15 @@
 package com.ridi.oauth2
 
-import android.support.test.InstrumentationRegistry
-import com.ridi.books.helper.io.saveToFile
-import okhttp3.Cookie
-import okhttp3.HttpUrl
+import com.auth0.android.jwt.JWT
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 import java.net.HttpURLConnection
 import java.util.Date
 
@@ -35,7 +30,6 @@ class TokenManagerTest {
 
     private lateinit var mockWebServer: MockWebServer
     private lateinit var apiBaseUrl: String
-    private lateinit var tokenSaveFile: File
     private lateinit var tokenManager: TokenManager
 
     @Before
@@ -72,55 +66,27 @@ class TokenManagerTest {
             })
         }
         apiBaseUrl = mockWebServer.url("/").toString()
-        tokenSaveFile = File(InstrumentationRegistry.getContext().filesDir, "tokenTest.json").apply {
-            if (exists()) {
-                delete()
-            }
-        }
-        tokenManager = TokenManager(apiBaseUrl, CLIENT_ID, tokenSaveFile)
+        tokenManager = TokenManager(apiBaseUrl, CLIENT_ID)
     }
 
     @Test
-    fun testAcquiringAccessToken() {
-        tokenManager.getAccessToken().blockingForEach {
-            assertEquals(it.subject, "AndroidKim")
+    fun testRidiAuthorization() {
+        tokenManager.requestRidiAuthorization(VALID_SESSION_ID).blockingForEach { result ->
+            assertEquals(JWT(result.accessToken).subject, "AndroidKim")
         }
     }
 
     @Test
     fun testTokenRefresh() {
-        tokenManager.phpSessionId = VALID_SESSION_ID
-
-        JSONObject()
-            .put(TokenManager.COOKIE_NAME_RIDI_AT, RIDI_AT)
-            .put(TokenManager.COOKIE_NAME_RIDI_RT, RIDI_RT)
-            .toString().saveToFile(tokenSaveFile)
-
-        tokenManager.getAccessToken().blockingForEach {
-            assertEquals(it.expiresAt, Date(0))
-        }
-    }
-
-    @Test
-    fun testCookieParsing() {
-        TokenManager.run {
-            val jsonObject = JSONObject()
-            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(apiBaseUrl)!!,
-                "$COOKIE_NAME_RIDI_RT=$RIDI_RT; Domain=; expires=Sat, 21-Jul-2018 10:40:47 GMT; HttpOnly; " +
-                    "Max-Age=2592000; Path=/; Secure")!!)
-            assertEquals(jsonObject.getString(COOKIE_NAME_RIDI_RT), RIDI_RT)
-            jsonObject.addTokensFromCookie(Cookie.parse(HttpUrl.parse(apiBaseUrl)!!,
-                "$COOKIE_NAME_RIDI_AT=$RIDI_AT;Domain=; expires=Thu, 21-Jun-2018 11:40:47 GMT; HttpOnly; " +
-                    "Max-Age=3600; Path=/; Settings.Secure")!!)
-            assertEquals(jsonObject.getString(COOKIE_NAME_RIDI_AT), RIDI_AT)
+        tokenManager.refreshAccessToken(RIDI_AT, RIDI_RT).blockingForEach { result ->
+            assertEquals(JWT(result.accessToken).expiresAt, Date(0))
         }
     }
 
     @Test
     fun testRedirectingToLoginPage() {
-        tokenManager.phpSessionId = INVALID_SESSION_ID
         try {
-            tokenManager.getAccessToken().blockingSingle()
+            tokenManager.requestRidiAuthorization(INVALID_SESSION_ID).blockingSingle()
         } catch (e: UnexpectedResponseException) {
             return
         }

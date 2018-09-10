@@ -8,9 +8,6 @@ class DemoAppApplication : Application() {
     companion object {
         private const val DEV_CLIENT_ID = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
         private const val REAL_CLIENT_ID = "ePgbKKRyPvdAFzTvFg2DvrS7GenfstHdkQ2uvFNd"
-        private const val DEV_TOKEN_SAVE_FILE_NAME = "dev-token.json"
-        private const val REAL_TOKEN_SAVE_FILE_NAME = "real-token.json"
-        private const val TOKEN_SAVE_ENCRYPTION_KEY = "1111111111111111"
 
         private lateinit var instance: DemoAppApplication
 
@@ -21,10 +18,10 @@ class DemoAppApplication : Application() {
             set(value) {
                 field = value
                 val clientId = if (value) DEV_CLIENT_ID else REAL_CLIENT_ID
-                val tokenSaveFile = File(instance.filesDir,
-                    if (value) DEV_TOKEN_SAVE_FILE_NAME else REAL_TOKEN_SAVE_FILE_NAME)
-                tokenManager = TokenManager(clientId, tokenSaveFile, TOKEN_SAVE_ENCRYPTION_KEY, value)
+                tokenManager = TokenManager(clientId, value)
             }
+
+        var phpSessionId = ""
     }
 
     override fun onCreate() {
