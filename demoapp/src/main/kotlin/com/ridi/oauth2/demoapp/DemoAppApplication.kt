@@ -2,7 +2,6 @@ package com.ridi.oauth2.demoapp
 
 import android.app.Application
 import com.ridi.oauth2.TokenManager
-import java.io.File
 
 class DemoAppApplication : Application() {
     companion object {
