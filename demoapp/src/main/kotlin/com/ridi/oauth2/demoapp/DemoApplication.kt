@@ -3,12 +3,12 @@ package com.ridi.oauth2.demoapp
 import android.app.Application
 import com.ridi.oauth2.TokenManager
 
-class DemoAppApplication : Application() {
+class DemoApplication : Application() {
     companion object {
         private const val DEV_CLIENT_ID = "Nkt2Xdc0zMuWmye6MSkYgqCh9q6JjeMCsUiH1kgL"
         private const val REAL_CLIENT_ID = "ePgbKKRyPvdAFzTvFg2DvrS7GenfstHdkQ2uvFNd"
 
-        private lateinit var instance: DemoAppApplication
+        private lateinit var instance: DemoApplication
 
         lateinit var tokenManager: TokenManager
             private set

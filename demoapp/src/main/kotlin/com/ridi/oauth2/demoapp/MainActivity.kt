@@ -14,7 +14,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        DemoAppApplication.isDevMode = true
+        DemoApplication.isDevMode = true
 
         val switch = findViewById<Switch>(R.id.server_switch)
 
@@ -24,7 +24,7 @@ class MainActivity : Activity() {
         }
 
         findViewById<Button>(R.id.access_token_button).setOnClickListener {
-            DemoAppApplication.tokenManager.requestRidiAuthorization(DemoAppApplication.phpSessionId).subscribe({
+            DemoApplication.tokenManager.requestRidiAuthorization(DemoApplication.phpSessionId).subscribe({
                 val jwt = JWT(it.accessToken)
                 val description =
                     "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
@@ -37,7 +37,7 @@ class MainActivity : Activity() {
 
         switch.setOnCheckedChangeListener { _, isChecked ->
             switch.text = if (isChecked) "REAL" else "TEST"
-            DemoAppApplication.isDevMode = isChecked.not()
+            DemoApplication.isDevMode = isChecked.not()
         }
     }
 }

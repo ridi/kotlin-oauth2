@@ -27,7 +27,7 @@ class WebViewActivity : Activity() {
                     splitCookies.forEach { cookie ->
                         val keyValue = cookie.trim().split("=")
                         if (keyValue[0] == "PHPSESSID") {
-                            DemoAppApplication.phpSessionId = keyValue[1]
+                            DemoApplication.phpSessionId = keyValue[1]
                         }
                     }
                 }
@@ -35,7 +35,7 @@ class WebViewActivity : Activity() {
         }
         webView.settings.javaScriptEnabled = true
 
-        val url = "https://${if (DemoAppApplication.isDevMode) DEV_HOST else REAL_HOST}/account/login"
+        val url = "https://${if (DemoApplication.isDevMode) DEV_HOST else REAL_HOST}/account/login"
         CookieManager.getInstance().setCookie(url, "")
         webView.loadUrl(url)
     }
