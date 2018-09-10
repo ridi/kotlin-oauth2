@@ -30,7 +30,9 @@ class Authorization {
     private val clientId: String
     private val apiManager: ApiManager
 
-    constructor(clientId: String, devMode: Boolean = false
+    constructor(
+        clientId: String,
+        devMode: Boolean = false
     ) : this("https://${if (devMode) DEV_HOST else REAL_HOST}/", clientId)
 
     @VisibleForTesting
