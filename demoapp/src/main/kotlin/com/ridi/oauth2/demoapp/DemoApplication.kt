@@ -1,7 +1,7 @@
 package com.ridi.oauth2.demoapp
 
 import android.app.Application
-import com.ridi.oauth2.TokenManager
+import com.ridi.oauth2.Authorization
 
 class DemoApplication : Application() {
     companion object {
@@ -10,14 +10,14 @@ class DemoApplication : Application() {
 
         private lateinit var instance: DemoApplication
 
-        lateinit var tokenManager: TokenManager
+        lateinit var authorization: Authorization
             private set
 
         var isDevMode = false
             set(value) {
                 field = value
                 val clientId = if (value) DEV_CLIENT_ID else REAL_CLIENT_ID
-                tokenManager = TokenManager(clientId, value)
+                authorization = Authorization(clientId, value)
             }
 
         var phpSessionId = ""

@@ -15,7 +15,7 @@ class InvalidTokenFileException : RuntimeException()
 
 class InvalidTokenEncryptionKeyException(message: String) : RuntimeException(message)
 
-class TokenManager {
+class Authorization {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io"
         private const val REAL_HOST = "account.ridibooks.com"
@@ -76,9 +76,10 @@ class TokenManager {
             })
     }
 
-    fun refreshAccessToken(accessToken: String, refreshToken: String): Observable<RequestResult> =
-        Observable.create { emitter ->
-            apiManager.service.refreshAccessToken(accessToken, refreshToken)
+    fun refreshAccessToken(refreshToken: String): Observable<RequestResult> {
+        apiManager.cookieStorage.refreshToken = refreshToken
+        return Observable.create { emitter ->
+            apiManager.service.refreshAccessToken()
                 .enqueue(object : Callback<ResponseBody> {
                     override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
                         apiManager.cookieStorage.clear()
@@ -86,26 +87,35 @@ class TokenManager {
                     }
 
                     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                        var newAccessToken: String? = null
-                        var newRefreshToken: String? = null
-                        apiManager.cookieStorage.savedCookies.forEach { cookie ->
-                            when (cookie.name()) {
-                                COOKIE_NAME_RIDI_AT -> newAccessToken = cookie.value()
-                                COOKIE_NAME_RIDI_RT -> newRefreshToken = cookie.value()
+                        try {
+                            if (response.isSuccessful) {
+                                var newAccessToken: String? = null
+                                var newRefreshToken: String? = null
+                                apiManager.cookieStorage.savedCookies.forEach { cookie ->
+                                    when (cookie.name()) {
+                                        COOKIE_NAME_RIDI_AT -> newAccessToken = cookie.value()
+                                        COOKIE_NAME_RIDI_RT -> newRefreshToken = cookie.value()
+                                    }
+                                }
+
+                                if (newAccessToken != null && newRefreshToken != null) {
+                                    emitter.emitItemAndCompleteIfNotDisposed(
+                                        RequestResult(newAccessToken!!, newRefreshToken!!)
+                                    )
+                                    return
+                                }
                             }
-                        }
 
-                        if (newAccessToken != null && newRefreshToken != null) {
-                            emitter.emitItemAndCompleteIfNotDisposed(RequestResult(newAccessToken!!, newRefreshToken!!))
-                        } else {
                             emitter.emitErrorIfNotDisposed(
-                                UnexpectedResponseException(response.code(), response.raw().request().url().toString()))
+                                UnexpectedResponseException(response.code(), response.raw().request().url().toString())
+                            )
+                        } finally {
+                            apiManager.cookieStorage.clear()
                         }
-
-                        apiManager.cookieStorage.clear()
                     }
                 })
         }
+    }
 
     private fun ObservableEmitter<RequestResult>.emitErrorIfNotDisposed(t: Throwable) {
         if (isDisposed.not()) {

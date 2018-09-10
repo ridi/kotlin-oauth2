@@ -9,11 +9,15 @@ internal class CookieStorage : CookieJar {
     var phpSessionId = ""
     lateinit var tokenFile: File
     var tokenEncryptionKey: String? = null
+    var refreshToken = ""
 
     val savedCookies = mutableListOf<Cookie>()
 
     override fun loadForRequest(url: HttpUrl) =
-        savedCookies + listOf(Cookie.parse(url, "$PHP_SESSION_ID_COOKIE_NAME=$phpSessionId")!!)
+        savedCookies + listOf(
+            Cookie.parse(url, "$PHP_SESSION_ID_COOKIE_NAME=$phpSessionId")!!,
+            Cookie.parse(url, "${Authorization.COOKIE_NAME_RIDI_RT}=$refreshToken")
+        )
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         savedCookies.addAll(cookies)

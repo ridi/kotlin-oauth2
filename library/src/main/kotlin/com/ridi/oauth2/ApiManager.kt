@@ -34,9 +34,6 @@ internal class ApiManager(baseUrl: String) {
         ): Call<ResponseBody>
 
         @POST("ridi/token")
-        fun refreshAccessToken(
-            @Header("Cookie") accessToken: String,
-            @Header("Cookie") refreshToken: String
-        ): Call<ResponseBody>
+        fun refreshAccessToken(): Call<ResponseBody>
     }
 }

@@ -13,7 +13,7 @@ import org.junit.Test
 import java.net.HttpURLConnection
 import java.util.Date
 
-class TokenManagerTest {
+class AuthorizationTest {
     companion object {
         private const val VALID_SESSION_ID = "1"
         private const val INVALID_SESSION_ID = "2"
@@ -30,7 +30,7 @@ class TokenManagerTest {
 
     private lateinit var mockWebServer: MockWebServer
     private lateinit var apiBaseUrl: String
-    private lateinit var tokenManager: TokenManager
+    private lateinit var authorization: Authorization
 
     @Before
     fun setUp() {
@@ -40,20 +40,21 @@ class TokenManagerTest {
                 @Throws(InterruptedException::class)
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     val url = request.requestUrl.toString()
-                    val atCookie = "${TokenManager.COOKIE_NAME_RIDI_AT}=$RIDI_AT_EXPIRES_AT_ZERO;"
-                    val rtCookie = "${TokenManager.COOKIE_NAME_RIDI_RT}=$RIDI_RT;"
+                    val atCookie = "${Authorization.COOKIE_NAME_RIDI_AT}=$RIDI_AT_EXPIRES_AT_ZERO;"
+                    val rtCookie = "${Authorization.COOKIE_NAME_RIDI_RT}=$RIDI_RT;"
 
                     return if (url.contains("ridi/authorize")) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP).run {
-                            if (request.headers.values("Cookie").contains("PHPSESSID=$INVALID_SESSION_ID")) {
+                            if (request.headers.values("Cookie")
+                                    .any { it.contains("PHPSESSID=$INVALID_SESSION_ID;") }) {
                                 setHeader("Location", LOGIN_PAGE)
                             } else {
-                                setHeader("Location", TokenManager.AUTHORIZATION_REDIRECT_URI)
+                                setHeader("Location", Authorization.AUTHORIZATION_REDIRECT_URI)
                                 addHeader("Set-Cookie", atCookie)
                                 addHeader("Set-Cookie", rtCookie)
                             }
                         }
-                    } else if (url.contains(LOGIN_PAGE) || url.contains(TokenManager.AUTHORIZATION_REDIRECT_URI)) {
+                    } else if (url.contains(LOGIN_PAGE) || url.contains(Authorization.AUTHORIZATION_REDIRECT_URI)) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
                     } else if (url.contains("ridi/token")) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_OK)
@@ -66,19 +67,19 @@ class TokenManagerTest {
             })
         }
         apiBaseUrl = mockWebServer.url("/").toString()
-        tokenManager = TokenManager(apiBaseUrl, CLIENT_ID)
+        authorization = Authorization(apiBaseUrl, CLIENT_ID)
     }
 
     @Test
     fun testRidiAuthorization() {
-        tokenManager.requestRidiAuthorization(VALID_SESSION_ID).blockingForEach { result ->
+        authorization.requestRidiAuthorization(VALID_SESSION_ID).blockingForEach { result ->
             assertEquals(JWT(result.accessToken).subject, "AndroidKim")
         }
     }
 
     @Test
     fun testTokenRefresh() {
-        tokenManager.refreshAccessToken(RIDI_AT, RIDI_RT).blockingForEach { result ->
+        authorization.refreshAccessToken(RIDI_RT).blockingForEach { result ->
             assertEquals(JWT(result.accessToken).expiresAt, Date(0))
         }
     }
@@ -86,7 +87,7 @@ class TokenManagerTest {
     @Test
     fun testRedirectingToLoginPage() {
         try {
-            tokenManager.requestRidiAuthorization(INVALID_SESSION_ID).blockingSingle()
+            authorization.requestRidiAuthorization(INVALID_SESSION_ID).blockingSingle()
         } catch (e: UnexpectedResponseException) {
             return
         }

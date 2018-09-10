@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
+import android.view.View
 import android.widget.Switch
 import android.widget.Toast
 import com.auth0.android.jwt.JWT
@@ -18,14 +18,33 @@ class MainActivity : Activity() {
 
         val switch = findViewById<Switch>(R.id.server_switch)
 
-        findViewById<Button>(R.id.login_button).setOnClickListener {
+        findViewById<View>(R.id.login_button).setOnClickListener {
             val intent = Intent(this, WebViewActivity::class.java)
             startActivity(intent)
         }
 
-        findViewById<Button>(R.id.access_token_button).setOnClickListener {
-            DemoApplication.tokenManager.requestRidiAuthorization(DemoApplication.phpSessionId).subscribe({
-                val jwt = JWT(it.accessToken)
+        var accessToken = ""
+        var refreshToken = ""
+
+        findViewById<View>(R.id.access_token_button).setOnClickListener {
+            DemoApplication.authorization.requestRidiAuthorization(DemoApplication.phpSessionId).subscribe({
+                accessToken = it.accessToken
+                refreshToken = it.refreshToken
+                val jwt = JWT(accessToken)
+                val description =
+                    "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
+                Toast.makeText(this, "Received => $description", Toast.LENGTH_SHORT).show()
+            }, { t ->
+                Toast.makeText(this, "Error => $t", Toast.LENGTH_SHORT).show()
+                Log.e(javaClass.name, t.message, t)
+            })
+        }
+
+        findViewById<View>(R.id.refresh_token_button).setOnClickListener {
+            DemoApplication.authorization.refreshAccessToken(accessToken, refreshToken).subscribe({
+                accessToken = it.accessToken
+                refreshToken = it.refreshToken
+                val jwt = JWT(accessToken)
                 val description =
                     "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
                 Toast.makeText(this, "Received => $description", Toast.LENGTH_SHORT).show()
