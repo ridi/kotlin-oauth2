@@ -41,7 +41,7 @@ class MainActivity : Activity() {
         }
 
         findViewById<View>(R.id.refresh_token_button).setOnClickListener {
-            DemoApplication.authorization.refreshAccessToken(accessToken, refreshToken).subscribe({
+            DemoApplication.authorization.refreshAccessToken(refreshToken).subscribe({
                 accessToken = it.accessToken
                 refreshToken = it.refreshToken
                 val jwt = JWT(accessToken)
