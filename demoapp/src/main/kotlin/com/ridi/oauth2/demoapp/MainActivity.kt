@@ -9,14 +9,14 @@ import android.widget.Switch
 import android.widget.Toast
 import com.auth0.android.jwt.JWT
 import com.ridi.oauth2.Authorization
-import io.reactivex.Observer
+import io.reactivex.SingleObserver
 import io.reactivex.disposables.Disposable
 
 class MainActivity : Activity() {
     private var refreshToken = ""
 
-    private val observer = object : Observer<Authorization.RequestResult> {
-        override fun onNext(t: Authorization.RequestResult) {
+    private val observer = object : SingleObserver<Authorization.RequestResult> {
+        override fun onSuccess(t: Authorization.RequestResult) {
             refreshToken = t.refreshToken
             val jwt = JWT(t.accessToken)
             val description =
@@ -29,11 +29,7 @@ class MainActivity : Activity() {
             Log.e(javaClass.name, e.message, e)
         }
 
-        override fun onComplete() {
-        }
-
-        override fun onSubscribe(d: Disposable) {
-        }
+        override fun onSubscribe(d: Disposable) {}
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

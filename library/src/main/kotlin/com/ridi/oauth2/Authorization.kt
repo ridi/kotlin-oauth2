@@ -1,8 +1,9 @@
 package com.ridi.oauth2
 
+import android.support.annotation.CallSuper
 import android.support.annotation.VisibleForTesting
-import io.reactivex.Observable
-import io.reactivex.ObservableEmitter
+import io.reactivex.Single
+import io.reactivex.SingleEmitter
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
@@ -39,91 +40,68 @@ class Authorization {
         api = Api(baseUrl)
     }
 
-    fun requestRidiAuthorization(phpSessionId: String): Observable<RequestResult> = Observable.create { emitter ->
+    abstract inner class CookieTokenExtractor(
+        private val emitter: SingleEmitter<RequestResult>
+    ) : Callback<ResponseBody> {
+        private var extractedResult: RequestResult? = null
+
+        @CallSuper
+        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+            api.cookieStorage.reset()
+            emitter.tryOnError(t)
+        }
+
+        @CallSuper
+        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+            extractedResult?.let {
+                emitter.onSuccess(it)
+            } ?: emitter.tryOnError(UnexpectedResponseException(response.code()))
+            api.cookieStorage.reset()
+        }
+
+        protected fun extractTokens() {
+            var accessToken: String? = null
+            var refreshToken: String? = null
+
+            api.cookieStorage.savedCookies.forEach { cookie ->
+                when (cookie.name()) {
+                    RIDI_AT_COOKIE_NAME -> accessToken = cookie.value()
+                    RIDI_RT_COOKIE_NAME -> refreshToken = cookie.value()
+                }
+            }
+
+            if (accessToken != null && refreshToken != null) {
+                extractedResult = RequestResult(accessToken!!, refreshToken!!)
+            }
+        }
+    }
+
+    fun requestRidiAuthorization(phpSessionId: String): Single<RequestResult> = Single.create { emitter ->
         api.cookieStorage.add(PHP_SESSION_ID_COOKIE_NAME, phpSessionId)
         api.service.requestAuthorization(clientId, "code", AUTHORIZATION_REDIRECT_URI)
-            .enqueue(object : Callback<ResponseBody> {
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    api.cookieStorage.reset()
-                    emitter.emitErrorIfNotDisposed(t)
-                }
-
+            .enqueue(object : CookieTokenExtractor(emitter) {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    try {
-                        if (emitter.isDisposed.not() && response.code() == HttpURLConnection.HTTP_MOVED_TEMP &&
-                            response.headers().values("Location").firstOrNull() == AUTHORIZATION_REDIRECT_URI) {
-                            var accessToken: String? = null
-                            var refreshToken: String? = null
-                            api.cookieStorage.savedCookies.forEach { cookie ->
-                                when (cookie.name()) {
-                                    RIDI_AT_COOKIE_NAME -> accessToken = cookie.value()
-                                    RIDI_RT_COOKIE_NAME -> refreshToken = cookie.value()
-                                }
-                            }
-
-                            if (accessToken != null && refreshToken != null) {
-                                emitter.emitItemAndCompleteIfNotDisposed(RequestResult(accessToken!!, refreshToken!!))
-                                return
-                            }
-                        }
-
-                        emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code()))
-                    } finally {
-                        api.cookieStorage.reset()
+                    if (response.code() == HttpURLConnection.HTTP_MOVED_TEMP &&
+                        response.headers().values("Location").firstOrNull() == AUTHORIZATION_REDIRECT_URI) {
+                        extractTokens()
                     }
+                    super.onResponse(call, response)
                 }
             })
     }
 
-    fun refreshAccessToken(refreshToken: String): Observable<RequestResult> {
+    fun refreshAccessToken(refreshToken: String): Single<RequestResult> {
         api.cookieStorage.add(RIDI_RT_COOKIE_NAME, refreshToken)
-        return Observable.create { emitter ->
+        return Single.create { emitter ->
             api.service.refreshAccessToken()
-                .enqueue(object : Callback<ResponseBody> {
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                        api.cookieStorage.reset()
-                        emitter.emitErrorIfNotDisposed(IllegalStateException(t))
-                    }
-
+                .enqueue(object : CookieTokenExtractor(emitter) {
                     override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                        try {
-                            if (response.isSuccessful) {
-                                var newAccessToken: String? = null
-                                var newRefreshToken: String? = null
-                                api.cookieStorage.savedCookies.forEach { cookie ->
-                                    when (cookie.name()) {
-                                        RIDI_AT_COOKIE_NAME -> newAccessToken = cookie.value()
-                                        RIDI_RT_COOKIE_NAME -> newRefreshToken = cookie.value()
-                                    }
-                                }
-
-                                if (newAccessToken != null && newRefreshToken != null) {
-                                    emitter.emitItemAndCompleteIfNotDisposed(
-                                        RequestResult(newAccessToken!!, newRefreshToken!!)
-                                    )
-                                    return
-                                }
-                            }
-
-                            emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code()))
-                        } finally {
-                            api.cookieStorage.reset()
+                        if (response.isSuccessful) {
+                            extractTokens()
                         }
+                        super.onResponse(call, response)
                     }
                 })
-        }
-    }
-
-    private fun ObservableEmitter<RequestResult>.emitErrorIfNotDisposed(t: Throwable) {
-        if (isDisposed.not()) {
-            onError(t)
-        }
-    }
-
-    private fun ObservableEmitter<RequestResult>.emitItemAndCompleteIfNotDisposed(item: RequestResult) {
-        if (isDisposed.not()) {
-            onNext(item)
-            onComplete()
         }
     }
 }

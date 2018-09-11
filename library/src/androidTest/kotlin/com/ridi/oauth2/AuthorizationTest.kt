@@ -71,22 +71,20 @@ class AuthorizationTest {
 
     @Test
     fun testRidiAuthorization() {
-        authorization.requestRidiAuthorization(VALID_SESSION_ID).blockingForEach { result ->
-            assertEquals(JWT(result.accessToken).subject, "AndroidKim")
-        }
+        val result = authorization.requestRidiAuthorization(VALID_SESSION_ID).blockingGet()
+        assertEquals(JWT(result.accessToken).subject, "AndroidKim")
     }
 
     @Test
     fun testTokenRefresh() {
-        authorization.refreshAccessToken(RIDI_RT).blockingForEach { result ->
-            assertEquals(JWT(result.accessToken).expiresAt, Date(0))
-        }
+        val result = authorization.refreshAccessToken(RIDI_RT).blockingGet()
+        assertEquals(JWT(result.accessToken).expiresAt, Date(0))
     }
 
     @Test
     fun testRedirectingToLoginPage() {
         try {
-            authorization.requestRidiAuthorization(INVALID_SESSION_ID).blockingSingle()
+            authorization.requestRidiAuthorization(INVALID_SESSION_ID).blockingGet()
         } catch (e: Authorization.UnexpectedResponseException) {
             return
         }

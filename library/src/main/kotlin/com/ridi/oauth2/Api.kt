@@ -1,5 +1,6 @@
 package com.ridi.oauth2
 
+import com.ridi.oauth2.cookie.CookieStorage
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Call

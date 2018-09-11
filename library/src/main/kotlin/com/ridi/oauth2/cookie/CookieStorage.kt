@@ -1,4 +1,4 @@
-package com.ridi.oauth2
+package com.ridi.oauth2.cookie
 
 import okhttp3.Cookie
 import okhttp3.CookieJar
