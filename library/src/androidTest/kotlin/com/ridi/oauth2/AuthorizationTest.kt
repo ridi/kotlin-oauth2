@@ -87,7 +87,7 @@ class AuthorizationTest {
     fun testRedirectingToLoginPage() {
         try {
             authorization.requestRidiAuthorization(INVALID_SESSION_ID).blockingSingle()
-        } catch (e: UnexpectedResponseException) {
+        } catch (e: Authorization.UnexpectedResponseException) {
             return
         }
         fail()

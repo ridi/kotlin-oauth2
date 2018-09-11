@@ -9,12 +9,6 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.net.HttpURLConnection
 
-class UnexpectedResponseException(val responseCode: Int, val redirectedToUrl: String) : RuntimeException()
-
-class InvalidTokenFileException : RuntimeException()
-
-class InvalidTokenEncryptionKeyException(message: String) : RuntimeException(message)
-
 class Authorization {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io"
@@ -28,6 +22,8 @@ class Authorization {
     }
 
     data class RequestResult(val accessToken: String, val refreshToken: String)
+
+    class UnexpectedResponseException(val responseCode: Int) : RuntimeException()
 
     private val clientId: String
     private val api: Api
@@ -71,8 +67,7 @@ class Authorization {
                             }
                         }
 
-                        emitter.emitErrorIfNotDisposed(
-                            UnexpectedResponseException(response.code(), response.raw().request().url().toString()))
+                        emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code()))
                     } finally {
                         api.cookieStorage.reset()
                     }
@@ -110,9 +105,7 @@ class Authorization {
                                 }
                             }
 
-                            emitter.emitErrorIfNotDisposed(
-                                UnexpectedResponseException(response.code(), response.raw().request().url().toString())
-                            )
+                            emitter.emitErrorIfNotDisposed(UnexpectedResponseException(response.code()))
                         } finally {
                             api.cookieStorage.reset()
                         }
