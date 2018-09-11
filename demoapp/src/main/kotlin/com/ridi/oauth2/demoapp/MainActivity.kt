@@ -8,8 +8,34 @@ import android.view.View
 import android.widget.Switch
 import android.widget.Toast
 import com.auth0.android.jwt.JWT
+import com.ridi.oauth2.Authorization
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 
 class MainActivity : Activity() {
+    private var refreshToken = ""
+
+    private val observer = object : Observer<Authorization.RequestResult> {
+        override fun onNext(t: Authorization.RequestResult) {
+            refreshToken = t.refreshToken
+            val jwt = JWT(t.accessToken)
+            val description =
+                "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
+            Toast.makeText(this@MainActivity, "Received => $description", Toast.LENGTH_SHORT).show()
+        }
+
+        override fun onError(e: Throwable) {
+            Toast.makeText(this@MainActivity, "Error => $e", Toast.LENGTH_SHORT).show()
+            Log.e(javaClass.name, e.message, e)
+        }
+
+        override fun onComplete() {
+        }
+
+        override fun onSubscribe(d: Disposable) {
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -23,35 +49,12 @@ class MainActivity : Activity() {
             startActivity(intent)
         }
 
-        var accessToken = ""
-        var refreshToken = ""
-
         findViewById<View>(R.id.access_token_button).setOnClickListener {
-            DemoApplication.authorization.requestRidiAuthorization(DemoApplication.phpSessionId).subscribe({
-                accessToken = it.accessToken
-                refreshToken = it.refreshToken
-                val jwt = JWT(accessToken)
-                val description =
-                    "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
-                Toast.makeText(this, "Received => $description", Toast.LENGTH_SHORT).show()
-            }, { t ->
-                Toast.makeText(this, "Error => $t", Toast.LENGTH_SHORT).show()
-                Log.e(javaClass.name, t.message, t)
-            })
+            DemoApplication.authorization.requestRidiAuthorization(DemoApplication.phpSessionId).subscribe(observer)
         }
 
         findViewById<View>(R.id.refresh_token_button).setOnClickListener {
-            DemoApplication.authorization.refreshAccessToken(refreshToken).subscribe({
-                accessToken = it.accessToken
-                refreshToken = it.refreshToken
-                val jwt = JWT(accessToken)
-                val description =
-                    "Subject=${jwt.subject}, u_idx=${jwt.getClaim("u_idx").asInt()}, expiresAt=${jwt.expiresAt}"
-                Toast.makeText(this, "Received => $description", Toast.LENGTH_SHORT).show()
-            }, { t ->
-                Toast.makeText(this, "Error => $t", Toast.LENGTH_SHORT).show()
-                Log.e(javaClass.name, t.message, t)
-            })
+            DemoApplication.authorization.refreshAccessToken(refreshToken).subscribe(observer)
         }
 
         switch.setOnCheckedChangeListener { _, isChecked ->

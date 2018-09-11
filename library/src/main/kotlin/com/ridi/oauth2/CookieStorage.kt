@@ -3,31 +3,26 @@ package com.ridi.oauth2
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
-import java.io.File
 
 internal class CookieStorage : CookieJar {
-    var phpSessionId = ""
-    lateinit var tokenFile: File
-    var tokenEncryptionKey: String? = null
-    var refreshToken = ""
+    private val _savedCookies = mutableListOf<Cookie>()
+    val savedCookies: List<Cookie>
+        get() = _savedCookies
+    private val additionalCookies = mutableMapOf<String, String>()
 
-    val savedCookies = mutableListOf<Cookie>()
+    fun add(name: String, value: String) {
+        additionalCookies[name] = value
+    }
 
     override fun loadForRequest(url: HttpUrl) =
-        savedCookies + listOf(
-            Cookie.parse(url, "$PHP_SESSION_ID_COOKIE_NAME=$phpSessionId")!!,
-            Cookie.parse(url, "${Authorization.COOKIE_NAME_RIDI_RT}=$refreshToken")
-        )
+        savedCookies + additionalCookies.map { Cookie.parse(url, "${it.key}=${it.value}") }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-        savedCookies.addAll(cookies)
+        _savedCookies.addAll(cookies)
     }
 
-    fun clear() {
-        savedCookies.clear()
-    }
-
-    companion object {
-        private const val PHP_SESSION_ID_COOKIE_NAME = "PHPSESSID"
+    fun reset() {
+        _savedCookies.clear()
+        additionalCookies.clear()
     }
 }

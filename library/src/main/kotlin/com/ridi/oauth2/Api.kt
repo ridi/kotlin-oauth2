@@ -9,22 +9,23 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-internal class ApiManager(baseUrl: String) {
+internal class Api(baseUrl: String) {
     val cookieStorage = CookieStorage()
+    val service: Service
 
-    private val client = OkHttpClient().newBuilder()
-        .cookieJar(cookieStorage)
-        .build()
+    init {
+        val client = OkHttpClient().newBuilder()
+            .cookieJar(cookieStorage)
+            .build()
+        val retrofit = Retrofit.Builder()
+            .client(client)
+            .baseUrl(baseUrl)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        service = retrofit.create(Service::class.java)
+    }
 
-    private val retrofit = Retrofit.Builder()
-        .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl(baseUrl)
-        .client(client)
-        .build()
-
-    val service: ApiService = retrofit.create(ApiService::class.java)
-
-    interface ApiService {
+    interface Service {
         @GET("ridi/authorize")
         fun requestAuthorization(
             @Query("client_id") clientId: String,

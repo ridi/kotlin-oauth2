@@ -40,13 +40,12 @@ class AuthorizationTest {
                 @Throws(InterruptedException::class)
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     val url = request.requestUrl.toString()
-                    val atCookie = "${Authorization.COOKIE_NAME_RIDI_AT}=$RIDI_AT_EXPIRES_AT_ZERO;"
-                    val rtCookie = "${Authorization.COOKIE_NAME_RIDI_RT}=$RIDI_RT;"
+                    val atCookie = "${Authorization.RIDI_AT_COOKIE_NAME}=$RIDI_AT_EXPIRES_AT_ZERO;"
+                    val rtCookie = "${Authorization.RIDI_RT_COOKIE_NAME}=$RIDI_RT;"
 
                     return if (url.contains("ridi/authorize")) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP).run {
-                            if (request.headers.values("Cookie")
-                                    .any { it.contains("PHPSESSID=$INVALID_SESSION_ID;") }) {
+                            if (request.headers.values("Cookie").contains("PHPSESSID=$INVALID_SESSION_ID")) {
                                 setHeader("Location", LOGIN_PAGE)
                             } else {
                                 setHeader("Location", Authorization.AUTHORIZATION_REDIRECT_URI)

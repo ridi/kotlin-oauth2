@@ -21,14 +21,16 @@ class Authorization {
         private const val REAL_HOST = "account.ridibooks.com"
         internal const val AUTHORIZATION_REDIRECT_URI = "app://authorized"
 
-        internal const val COOKIE_NAME_RIDI_AT = "ridi-at"
-        internal const val COOKIE_NAME_RIDI_RT = "ridi-rt"
+        internal const val RIDI_AT_COOKIE_NAME = "ridi-at"
+        internal const val RIDI_RT_COOKIE_NAME = "ridi-rt"
+
+        private const val PHP_SESSION_ID_COOKIE_NAME = "PHPSESSID"
     }
 
     data class RequestResult(val accessToken: String, val refreshToken: String)
 
     private val clientId: String
-    private val apiManager: ApiManager
+    private val api: Api
 
     constructor(
         clientId: String,
@@ -38,15 +40,15 @@ class Authorization {
     @VisibleForTesting
     internal constructor(baseUrl: String, clientId: String) {
         this.clientId = clientId
-        apiManager = ApiManager(baseUrl)
+        api = Api(baseUrl)
     }
 
     fun requestRidiAuthorization(phpSessionId: String): Observable<RequestResult> = Observable.create { emitter ->
-        apiManager.cookieStorage.phpSessionId = phpSessionId
-        apiManager.service.requestAuthorization(clientId, "code", AUTHORIZATION_REDIRECT_URI)
+        api.cookieStorage.add(PHP_SESSION_ID_COOKIE_NAME, phpSessionId)
+        api.service.requestAuthorization(clientId, "code", AUTHORIZATION_REDIRECT_URI)
             .enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    apiManager.cookieStorage.clear()
+                    api.cookieStorage.reset()
                     emitter.emitErrorIfNotDisposed(t)
                 }
 
@@ -56,10 +58,10 @@ class Authorization {
                             response.headers().values("Location").firstOrNull() == AUTHORIZATION_REDIRECT_URI) {
                             var accessToken: String? = null
                             var refreshToken: String? = null
-                            apiManager.cookieStorage.savedCookies.forEach { cookie ->
+                            api.cookieStorage.savedCookies.forEach { cookie ->
                                 when (cookie.name()) {
-                                    COOKIE_NAME_RIDI_AT -> accessToken = cookie.value()
-                                    COOKIE_NAME_RIDI_RT -> refreshToken = cookie.value()
+                                    RIDI_AT_COOKIE_NAME -> accessToken = cookie.value()
+                                    RIDI_RT_COOKIE_NAME -> refreshToken = cookie.value()
                                 }
                             }
 
@@ -72,19 +74,19 @@ class Authorization {
                         emitter.emitErrorIfNotDisposed(
                             UnexpectedResponseException(response.code(), response.raw().request().url().toString()))
                     } finally {
-                        apiManager.cookieStorage.clear()
+                        api.cookieStorage.reset()
                     }
                 }
             })
     }
 
     fun refreshAccessToken(refreshToken: String): Observable<RequestResult> {
-        apiManager.cookieStorage.refreshToken = refreshToken
+        api.cookieStorage.add(RIDI_RT_COOKIE_NAME, refreshToken)
         return Observable.create { emitter ->
-            apiManager.service.refreshAccessToken()
+            api.service.refreshAccessToken()
                 .enqueue(object : Callback<ResponseBody> {
                     override fun onFailure(call: Call<ResponseBody>, t: Throwable?) {
-                        apiManager.cookieStorage.clear()
+                        api.cookieStorage.reset()
                         emitter.emitErrorIfNotDisposed(IllegalStateException(t))
                     }
 
@@ -93,10 +95,10 @@ class Authorization {
                             if (response.isSuccessful) {
                                 var newAccessToken: String? = null
                                 var newRefreshToken: String? = null
-                                apiManager.cookieStorage.savedCookies.forEach { cookie ->
+                                api.cookieStorage.savedCookies.forEach { cookie ->
                                     when (cookie.name()) {
-                                        COOKIE_NAME_RIDI_AT -> newAccessToken = cookie.value()
-                                        COOKIE_NAME_RIDI_RT -> newRefreshToken = cookie.value()
+                                        RIDI_AT_COOKIE_NAME -> newAccessToken = cookie.value()
+                                        RIDI_RT_COOKIE_NAME -> newRefreshToken = cookie.value()
                                     }
                                 }
 
@@ -112,7 +114,7 @@ class Authorization {
                                 UnexpectedResponseException(response.code(), response.raw().request().url().toString())
                             )
                         } finally {
-                            apiManager.cookieStorage.clear()
+                            api.cookieStorage.reset()
                         }
                     }
                 })
