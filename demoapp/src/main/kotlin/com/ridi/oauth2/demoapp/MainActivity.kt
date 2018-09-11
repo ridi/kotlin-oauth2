@@ -8,15 +8,15 @@ import android.view.View
 import android.widget.Switch
 import android.widget.Toast
 import com.auth0.android.jwt.JWT
-import com.ridi.oauth2.Authorization
+import com.ridi.oauth2.TokenPair
 import io.reactivex.SingleObserver
 import io.reactivex.disposables.Disposable
 
 class MainActivity : Activity() {
     private var refreshToken = ""
 
-    private val observer = object : SingleObserver<Authorization.RequestResult> {
-        override fun onSuccess(t: Authorization.RequestResult) {
+    private val observer = object : SingleObserver<TokenPair> {
+        override fun onSuccess(t: TokenPair) {
             refreshToken = t.refreshToken
             val jwt = JWT(t.accessToken)
             val description =

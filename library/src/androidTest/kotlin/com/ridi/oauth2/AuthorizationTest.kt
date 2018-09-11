@@ -1,6 +1,7 @@
 package com.ridi.oauth2
 
 import com.auth0.android.jwt.JWT
+import com.ridi.oauth2.cookie.CookieTokenExtractor
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -40,8 +41,8 @@ class AuthorizationTest {
                 @Throws(InterruptedException::class)
                 override fun dispatch(request: RecordedRequest): MockResponse {
                     val url = request.requestUrl.toString()
-                    val atCookie = "${Authorization.RIDI_AT_COOKIE_NAME}=$RIDI_AT_EXPIRES_AT_ZERO;"
-                    val rtCookie = "${Authorization.RIDI_RT_COOKIE_NAME}=$RIDI_RT;"
+                    val atCookie = "${CookieTokenExtractor.RIDI_AT_COOKIE_NAME}=$RIDI_AT_EXPIRES_AT_ZERO;"
+                    val rtCookie = "${CookieTokenExtractor.RIDI_RT_COOKIE_NAME}=$RIDI_RT;"
 
                     return if (url.contains("ridi/authorize")) {
                         MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP).run {
@@ -85,7 +86,7 @@ class AuthorizationTest {
     fun testRedirectingToLoginPage() {
         try {
             authorization.requestRidiAuthorization(INVALID_SESSION_ID).blockingGet()
-        } catch (e: Authorization.UnexpectedResponseException) {
+        } catch (e: UnexpectedResponseException) {
             return
         }
         fail()
