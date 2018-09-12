@@ -30,6 +30,8 @@ class Authorization {
         api = Api(baseUrl)
     }
 
+    @Deprecated("Use requestPasswordGrantAuthorization()",
+        ReplaceWith("requestPasswordGrantAuthorization()"))
     fun requestRidiAuthorization(phpSessionId: String): Single<TokenPair> = Single.create { emitter ->
         api.cookieStorage.add(PHP_SESSION_ID_COOKIE_NAME, phpSessionId)
         api.service.requestAuthorization(clientId, "code", AUTHORIZATION_REDIRECT_URI)
@@ -38,6 +40,10 @@ class Authorization {
                     response.code() == HttpURLConnection.HTTP_MOVED_TEMP &&
                         response.headers().values("Location").firstOrNull() == AUTHORIZATION_REDIRECT_URI
             })
+    }
+
+    fun requestPasswordGrantAuthorization(): Single<TokenPair> {
+        TODO()
     }
 
     fun refreshAccessToken(refreshToken: String): Single<TokenPair> {
