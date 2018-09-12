@@ -1,31 +1,14 @@
-language: android
+language: java
 jdk: oraclejdk8
-
-before_cache: rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-
-cache:
-  directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
 
 android:
   components:
     - tools
     - platform-tools
     - build-tools-27.0.3
-    - android-22
     - android-27
-    - sys-img-armeabi-v7a-android-22
 
-before_script:
-  - ./gradlew ktlint
-  - echo no | android create avd --force -n test -t android-22 --abi armeabi-v7a
-  - emulator -avd test -no-window &
-  - android-wait-for-emulator
-  - adb shell input keyevent 82 &
-
-after_script:
-  - cat lib/build/reports/androidTests/connected/*.html
+script: ./gradlew check library:test
 
 notifications:
   email: false
