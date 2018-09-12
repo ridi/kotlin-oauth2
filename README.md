@@ -1,9 +1,9 @@
-# android-oauth2
+# kotlin-oauth2
 
-[![Build Status](https://travis-ci.org/ridi/android-oauth2.svg?branch=master)](https://travis-ci.org/ridi/android-oauth2)
-[![Release](https://jitpack.io/v/ridi/android-oauth2.svg)](https://jitpack.io/#ridi/android-oauth2)
+[![Build Status](https://travis-ci.org/ridi/kotlin-oauth2.svg?branch=master)](https://travis-ci.org/ridi/kotlin-oauth2)
+[![Release](https://jitpack.io/v/ridi/kotlin-oauth2.svg)](https://jitpack.io/#ridi/kotlin-oauth2)
 
-Convenient oauth2 library for Android platform
+JVM base OAuth2 client library written in Kotlin for RIDI account authorization
 
 ## Getting started
 
@@ -24,34 +24,33 @@ Then you can include this library by adding dependency script to build.gradle fi
 ```
 dependencies {
     ...
-    implementation 'com.github.ridi:android-oauth2:<version>'
+    implementation 'com.github.ridi:kotlin-oauth2:<version>'
     ...
 }
 ```
 
 ## API
 
-Create `TokenManager` object.
+Create `Authorization` object.
 
+```kotlin
+val authorization = Authorization()
 ```
-var tokenManager = TokenManager()
+
+You can get `Signle<TokenPair>` object by following examples.
+
+### Code grant by user's session
+
+```kotlin
+authorization.requestRidiAuthorization("session-id")
 ```
 
-Then, you can get access token from `getAccessToken()` method.
-You should set some variables before `getAccessToken()` method is called.
+### Password grant
 
-|Variables | Type | Description       |
-|-----------------------|-----------------------|---------------------------|
-|tokenEncryptionKey|String|Defaults to `null`. `TokenEncryptionKey` should be 16 bytes long.|
-|tokenFile|String|The Location where you want to save a token file|
-|clientId|String|Client's identifier|
-|sessionId|String|Logged-in user's session value|
+TBW
 
-If you called `getAccessToken()`method successfully, you receive an access token. Otherwise, you receive errors. 
+### Refresh access token
 
-|Errors | Description|
-|-------|------------|
-|UnexpectedResponseException|Access token is unavailable.|
-|InvalidTokenFileException|Token File is deleted or damaged.|
-|InvalidTokenEncryptionKeyException| `tokenEncryptionKey` is not 16 bytes long.|
-
+```kotlin
+authorization.refreshAccessToken("refresh-token")
+```
