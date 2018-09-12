@@ -1,48 +1,24 @@
-apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'kotlin-android'
+apply plugin: 'kotlin'
+apply plugin: 'maven'
 
 group = 'com.github.ridi'
 version = '1.1.0'
-
-android {
-    compileSdkVersion sdkVersion
-    buildToolsVersion rootProject.buildToolsVersion
-
-    defaultConfig {
-        minSdkVersion rootProject.minSdkVersion
-        versionCode 1
-        versionName version
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles 'proguard-rules.pro'
-        archivesBaseName = rootProject.name
-    }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-        androidTest.java.srcDirs += 'src/androidTest/kotlin'
-    }
-}
+jar.baseName = rootProject.name
 
 dependencies {
-    api 'io.reactivex.rxjava2:rxjava:2.2.1'
+    compile 'com.squareup.retrofit2:retrofit:2.4.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.4.0'
+    compile 'io.reactivex.rxjava2:rxjava:2.2.1'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    implementation 'com.android.support:support-annotations:27.1.1'
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
-
-    testImplementation 'junit:junit:4.12'
-
-    androidTestImplementation 'com.android.support.test:rules:1.0.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.auth0.android:jwtdecode:1.1.1'
-    androidTestImplementation 'com.squareup.okhttp3:mockwebserver:3.7.0'
+    testCompile 'com.auth0:java-jwt:3.4.0'
+    testCompile 'com.squareup.okhttp3:mockwebserver:3.7.0'
+    testCompile 'junit:junit:4.12'
 }
 
 task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
+    from sourceSets.main.allSource
     classifier = 'sources'
 }
 

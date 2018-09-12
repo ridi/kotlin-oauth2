@@ -1,6 +1,6 @@
 package com.ridi.oauth2
 
-import com.auth0.android.jwt.JWT
+import com.auth0.jwt.JWT
 import com.ridi.oauth2.cookie.CookieTokenExtractor
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
@@ -73,13 +73,16 @@ class AuthorizationTest {
     @Test
     fun testRidiAuthorization() {
         val result = authorization.requestRidiAuthorization(VALID_SESSION_ID).blockingGet()
-        assertEquals(JWT(result.accessToken).subject, "AndroidKim")
+        assertEquals("AndroidKim", JWT.decode(result.accessToken).subject)
+        assertEquals(2627925, JWT.decode(result.accessToken).getClaim("u_idx").asInt())
     }
 
     @Test
     fun testTokenRefresh() {
         val result = authorization.refreshAccessToken(RIDI_RT).blockingGet()
-        assertEquals(JWT(result.accessToken).expiresAt, Date(0))
+        assertEquals("AndroidKim", JWT.decode(result.accessToken).subject)
+        assertEquals(2627925, JWT.decode(result.accessToken).getClaim("u_idx").asInt())
+        assertEquals(Date(0), JWT.decode(result.accessToken).expiresAt)
     }
 
     @Test

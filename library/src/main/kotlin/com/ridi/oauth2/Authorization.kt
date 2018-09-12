@@ -1,6 +1,5 @@
 package com.ridi.oauth2
 
-import android.support.annotation.VisibleForTesting
 import com.ridi.oauth2.cookie.CookieTokenExtractor
 import io.reactivex.Single
 import okhttp3.ResponseBody
@@ -25,7 +24,7 @@ class Authorization {
         devMode: Boolean = false
     ) : this("https://${if (devMode) DEV_HOST else REAL_HOST}/", clientId)
 
-    @VisibleForTesting
+    // For Test
     internal constructor(baseUrl: String, clientId: String) {
         this.clientId = clientId
         api = Api(baseUrl)
