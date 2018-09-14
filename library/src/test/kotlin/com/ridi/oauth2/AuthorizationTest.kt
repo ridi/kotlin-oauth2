@@ -7,8 +7,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.net.HttpURLConnection
@@ -73,16 +72,16 @@ class AuthorizationTest {
     @Test
     fun testRidiAuthorization() {
         val result = authorization.requestRidiAuthorization(VALID_SESSION_ID).blockingGet()
-        assertEquals("AndroidKim", JWT.decode(result.accessToken).subject)
-        assertEquals(2627925, JWT.decode(result.accessToken).getClaim("u_idx").asInt())
+        Assert.assertEquals("AndroidKim", JWT.decode(result.accessToken).subject)
+        Assert.assertEquals(2627925, JWT.decode(result.accessToken).getClaim("u_idx").asInt())
     }
 
     @Test
     fun testTokenRefresh() {
         val result = authorization.refreshAccessToken(RIDI_RT).blockingGet()
-        assertEquals("AndroidKim", JWT.decode(result.accessToken).subject)
-        assertEquals(2627925, JWT.decode(result.accessToken).getClaim("u_idx").asInt())
-        assertEquals(Date(0), JWT.decode(result.accessToken).expiresAt)
+        Assert.assertEquals("AndroidKim", JWT.decode(result.accessToken).subject)
+        Assert.assertEquals(2627925, JWT.decode(result.accessToken).getClaim("u_idx").asInt())
+        Assert.assertEquals(Date(0), JWT.decode(result.accessToken).expiresAt)
     }
 
     @Test
@@ -92,7 +91,7 @@ class AuthorizationTest {
         } catch (e: UnexpectedResponseException) {
             return
         }
-        fail()
+        Assert.fail()
     }
 
     @After
