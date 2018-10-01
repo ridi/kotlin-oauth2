@@ -1,58 +1,42 @@
 package com.ridi.oauth2
 
-import com.ridi.oauth2.cookie.CookieTokenExtractor
-import io.reactivex.Single
-import okhttp3.ResponseBody
-import retrofit2.Response
-import java.net.HttpURLConnection
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
-class Authorization {
+class Authorization(private val clientId: String, private val clientSecret: String, devMode: Boolean = false) {
     companion object {
         private const val DEV_HOST = "account.dev.ridi.io"
         private const val REAL_HOST = "account.ridibooks.com"
 
-        private const val PHP_SESSION_ID_COOKIE_NAME = "PHPSESSID"
-
-        internal const val AUTHORIZATION_REDIRECT_URI = "app://authorized"
+        private const val CONNECT_TIMEOUT_SECONDS = 5L
+        private const val READ_TIMEOUT_SECONDS = 10L
     }
 
-    private val clientId: String
-    private val api: Api
+    private val apiService: ApiService
 
-    constructor(
-        clientId: String,
-        devMode: Boolean = false
-    ) : this("https://${if (devMode) DEV_HOST else REAL_HOST}/", clientId)
-
-    // For Test
-    internal constructor(baseUrl: String, clientId: String) {
-        this.clientId = clientId
-        api = Api(baseUrl)
+    init {
+        val client = OkHttpClient.Builder()
+            .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build()
+        val retrofit = Retrofit.Builder()
+            .client(client)
+            .baseUrl("https://${if (devMode) DEV_HOST else REAL_HOST}/")
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(
+                GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()))
+            .build()
+        apiService = retrofit.create(ApiService::class.java)
     }
 
-    @Deprecated("Use requestPasswordGrantAuthorization()",
-        ReplaceWith("requestPasswordGrantAuthorization()"))
-    fun requestRidiAuthorization(phpSessionId: String): Single<TokenPair> = Single.create { emitter ->
-        api.cookieStorage.add(PHP_SESSION_ID_COOKIE_NAME, phpSessionId)
-        api.service.requestAuthorization(clientId, "code", AUTHORIZATION_REDIRECT_URI)
-            .enqueue(object : CookieTokenExtractor(api.cookieStorage, emitter) {
-                override fun isExtractionAvailable(response: Response<ResponseBody>) =
-                    response.code() == HttpURLConnection.HTTP_MOVED_TEMP &&
-                        response.headers().values("Location").firstOrNull() == AUTHORIZATION_REDIRECT_URI
-            })
-    }
+    fun requestPasswordGrantAuthorization(username: String, password: String) =
+        apiService.requestToken(clientId, clientSecret, ApiService.PASSWORD_GRANT_TYPE, username, password, null)
 
-    fun requestPasswordGrantAuthorization(): Single<TokenPair> {
-        TODO()
-    }
-
-    fun refreshAccessToken(refreshToken: String): Single<TokenPair> {
-        api.cookieStorage.add(CookieTokenExtractor.RIDI_RT_COOKIE_NAME, refreshToken)
-        return Single.create { emitter ->
-            api.service.refreshAccessToken()
-                .enqueue(object : CookieTokenExtractor(api.cookieStorage, emitter) {
-                    override fun isExtractionAvailable(response: Response<ResponseBody>) = response.isSuccessful
-                })
-        }
-    }
+    fun refreshAccessToken(refreshToken: String) =
+        apiService.requestToken(clientId, clientSecret, ApiService.REFRESH_TOKEN_GRANT_TYPE, null, null, refreshToken)
 }
