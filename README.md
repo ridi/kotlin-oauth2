@@ -31,23 +31,19 @@ dependencies {
 
 ## API
 
-Create `Authorization` object.
+Create `Authorization` object with your client id and client secret.
 
 ```kotlin
-val authorization = Authorization()
+val authorization = Authorization("client-id", "client-secret")
 ```
 
-You can get `Signle<TokenPair>` object by following examples.
-
-### Code grant by user's session
-
-```kotlin
-authorization.requestRidiAuthorization("session-id")
-```
+You can get `Single<TokenResponse>` object by following examples.
 
 ### Password grant
 
-TBW
+```kotlin
+authorization.requestPasswordGrantAuthorization("username", "password")
+```
 
 ### Refresh access token
 
