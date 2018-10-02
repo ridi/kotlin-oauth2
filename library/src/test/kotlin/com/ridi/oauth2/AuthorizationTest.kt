@@ -24,9 +24,9 @@ class AuthorizationTest {
             Assert.assertEquals("all", scope)
         }
 
-        authorization.requestPasswordGrantAuthorization(username, password).blockingSingle().run {
+        authorization.requestPasswordGrantAuthorization(username, password).blockingGet().run {
             assert()
-            authorization.refreshAccessToken(refreshToken).blockingSingle().assert()
+            authorization.refreshAccessToken(refreshToken).blockingGet().assert()
         }
     }
 }

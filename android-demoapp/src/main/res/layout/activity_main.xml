@@ -3,34 +3,46 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="20dp">
 
-    <Switch
-        android:id="@+id/server_switch"
+    <Switch android:id="@+id/server_switch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:switchPadding="20dp"
-        android:text="TEST" />
+        android:text="DEV SERVER" />
 
-    <Button
-        android:id="@+id/login_button"
+    <EditText android:id="@+id/client_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:maxLines="1"
+        android:hint="CLIENT ID" />
+
+    <EditText android:id="@+id/client_secret"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:maxLines="1"
+        android:hint="CLIENT SECRET" />
+
+    <EditText android:id="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:maxLines="1"
+        android:hint="USERNAME" />
+
+    <EditText android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="PASSWORD"
+        android:inputType="textPassword" />
+
+    <Button android:id="@+id/request_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
-        android:text="로그인" />
-
-    <Button
-        android:id="@+id/access_token_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:text="Access token 가져오기" />
-
-    <Button
-        android:id="@+id/refresh_token_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:text="Refresh access token" />
+        android:text="Request access token" />
 
 </LinearLayout>
