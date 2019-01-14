@@ -6,14 +6,14 @@ version = '1.1.0'
 jar.baseName = rootProject.name
 
 dependencies {
-    compile 'com.squareup.retrofit2:retrofit:2.4.0'
-    compile 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.4.0'
-    compile 'io.reactivex.rxjava2:rxjava:2.2.1'
+    compile 'com.squareup.retrofit2:retrofit:2.5.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava2:2.5.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.5.0'
+    compile 'io.reactivex.rxjava2:rxjava:2.2.4'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
     testCompile 'com.auth0:java-jwt:3.4.0'
-    testCompile 'com.squareup.okhttp3:mockwebserver:3.7.0'
+    testCompile 'com.squareup.okhttp3:mockwebserver:3.12.0'
     testCompile 'junit:junit:4.12'
 }
 
