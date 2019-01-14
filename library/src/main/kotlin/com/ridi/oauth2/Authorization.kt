@@ -33,8 +33,11 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
         val retrofit = Retrofit.Builder()
             .client(client)
             .baseUrl("https://${if (devMode) DEV_HOST else REAL_HOST}/")
-            .addConverterFactory(GsonConverterFactory.create(
-                GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()))
+            .addConverterFactory(
+                GsonConverterFactory.create(
+                    GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create()
+                )
+            )
             .build()
         apiService = retrofit.create(ApiService::class.java)
     }
@@ -48,8 +51,8 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
     fun refreshAccessToken(refreshToken: String): Single<TokenResponse> =
         Single.create<TokenResponse> { emitter ->
             apiService.requestToken(
-                clientId, clientSecret, ApiService.REFRESH_TOKEN_GRANT_TYPE, null, null, refreshToken)
-                .enqueue(ApiCallback(emitter))
+                clientId, clientSecret, ApiService.REFRESH_TOKEN_GRANT_TYPE, null, null, refreshToken
+            ).enqueue(ApiCallback(emitter))
         }
 
     private class ApiCallback(private val emitter: SingleEmitter<TokenResponse>) : Callback<TokenResponse> {
@@ -64,12 +67,14 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
                 }
             } else {
                 val statusCode = response.code()
-                emitter.tryOnError(response.errorBody()?.let {
+                emitter.tryOnError(
+                    response.errorBody()?.let {
                     val errorObject = Gson().fromJson<JsonObject>(it.charStream(), JsonObject::class.java)
                     val errorCode = errorObject.get("error")?.asString
                     val errorDescription = errorObject.get("error_description")?.asString
                     AuthorizationFailedException(statusCode, errorCode, errorDescription)
-                } ?: AuthorizationFailedException(statusCode))
+                    } ?: AuthorizationFailedException(statusCode)
+                )
             }
         }
     }
