@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Bump `RxJava` version from 2.2.1 to 2.2.4.
 - Bump `Retrofit` version from 2.4.0 to 2.5.0.
+- Explicit license information was added to Maven POM.
 
 ## [1.1.0] - 2018-10-02
 ### Added

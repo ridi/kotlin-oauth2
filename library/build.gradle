@@ -25,3 +25,17 @@ task sourcesJar(type: Jar) {
 artifacts {
     archives sourcesJar
 }
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            licenses {
+                license {
+                    name 'The MIT License'
+                    url 'https://opensource.org/licenses/MIT'
+                    distribution 'repo'
+                }
+            }
+        }
+    }
+}
