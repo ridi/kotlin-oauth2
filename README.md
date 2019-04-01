@@ -29,6 +29,14 @@ dependencies {
 }
 ```
 
+### Android ProGuard
+
+If you want to use this library on your Android project using ProGuard, add the following line to your ProGuard rules file.
+
+```
+-keepclassmembers class com.ridi.oauth2.TokenResponse { *; }
+```
+
 ## API
 
 Create `Authorization` object with your client id and client secret.
@@ -50,3 +58,7 @@ authorization.requestPasswordGrantAuthorization("username", "password")
 ```kotlin
 authorization.refreshAccessToken("refresh-token")
 ```
+
+## Android proguard rule
+
+Add following line to your proguard rules file if 
