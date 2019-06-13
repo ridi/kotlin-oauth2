@@ -13,7 +13,7 @@ class AuthorizationTest {
 
     @Test
     fun `test password grant authorization and token refresh`() {
-        val authorization = Authorization(clientId, clientSecret, true)
+        val authorization = Authorization(clientId, clientSecret)
 
         fun TokenResponse.assert() {
             val jwt = JWT.decode(accessToken)
