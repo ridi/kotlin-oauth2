@@ -69,10 +69,11 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
                 val statusCode = response.code()
                 emitter.tryOnError(
                     response.errorBody()?.let {
-                    val errorObject = Gson().fromJson<JsonObject>(it.charStream(), JsonObject::class.java)
-                    val errorCode = errorObject.get("error")?.asString
-                    val errorDescription = errorObject.get("error_description")?.asString
-                    AuthorizationFailedException(statusCode, errorCode, errorDescription)
+                        val errorObject = Gson().fromJson<JsonObject>(it.charStream(), JsonObject::class.java)
+                        errorObject ?: return@let null
+                        val errorCode = errorObject.get("error")?.asString
+                        val errorDescription = errorObject.get("error_description")?.asString
+                        AuthorizationFailedException(statusCode, errorCode, errorDescription)
                     } ?: AuthorizationFailedException(statusCode)
                 )
             }
