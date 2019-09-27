@@ -58,7 +58,3 @@ authorization.requestPasswordGrantAuthorization("username", "password")
 ```kotlin
 authorization.refreshAccessToken("refresh-token")
 ```
-
-## Android proguard rule
-
-Add following line to your proguard rules file if 
