@@ -4,6 +4,7 @@ import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import okhttp3.OkHttpClient
@@ -43,13 +44,13 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
     }
 
     fun requestPasswordGrantAuthorization(username: String, password: String): Single<TokenResponse> =
-        Single.create<TokenResponse> { emitter ->
+        Single.create { emitter ->
             apiService.requestToken(clientId, clientSecret, ApiService.PASSWORD_GRANT_TYPE, username, password, null)
                 .enqueue(ApiCallback(emitter))
         }
 
     fun refreshAccessToken(refreshToken: String): Single<TokenResponse> =
-        Single.create<TokenResponse> { emitter ->
+        Single.create { emitter ->
             apiService.requestToken(
                 clientId, clientSecret, ApiService.REFRESH_TOKEN_GRANT_TYPE, null, null, refreshToken
             ).enqueue(ApiCallback(emitter))
@@ -69,8 +70,11 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
                 val statusCode = response.code()
                 emitter.tryOnError(
                     response.errorBody()?.let {
-                        val errorObject = Gson().fromJson<JsonObject>(it.charStream(), JsonObject::class.java)
-                        errorObject ?: return@let null
+                        val errorObject = try {
+                            Gson().fromJson(it.charStream(), JsonObject::class.java) ?: return@let null
+                        } catch (e: JsonSyntaxException) {
+                            return@let null
+                        }
                         val errorCode = errorObject.get("error")?.asString
                         val errorDescription = errorObject.get("error_description")?.asString
                         AuthorizationFailedException(statusCode, errorCode, errorDescription)
