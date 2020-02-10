@@ -2,24 +2,23 @@ apply plugin: 'kotlin'
 apply plugin: 'maven'
 
 group = 'com.github.ridi'
-version = '1.1.1'
-jar.baseName = rootProject.name
+version = '1.1.3'
+jar.archiveBaseName.set(rootProject.name)
 
 dependencies {
-    compile 'com.squareup.retrofit2:retrofit:2.5.0'
-    compile 'com.squareup.retrofit2:adapter-rxjava2:2.5.0'
-    compile 'com.squareup.retrofit2:converter-gson:2.5.0'
-    compile 'io.reactivex.rxjava2:rxjava:2.2.4'
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation 'com.squareup.retrofit2:retrofit:2.6.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.6.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.0'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.4'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
 
-    testCompile 'com.auth0:java-jwt:3.4.0'
-    testCompile 'com.squareup.okhttp3:mockwebserver:3.12.0'
-    testCompile 'junit:junit:4.12'
+    testImplementation 'com.auth0:java-jwt:3.4.0'
+    testImplementation 'junit:junit:4.12'
 }
 
 task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
-    classifier = 'sources'
+    archiveClassifier.set('sources')
 }
 
 artifacts {
