@@ -2,6 +2,7 @@ package com.ridi.oauth2
 
 import retrofit2.Call
 import retrofit2.http.Field
+import retrofit2.http.FieldMap
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
 
@@ -19,6 +20,7 @@ internal interface ApiService {
         @Field("grant_type") grantType: String,
         @Field("username") username: String?,
         @Field("password") password: String?,
-        @Field("refresh_token") refreshToken: String?
+        @Field("refresh_token") refreshToken: String?,
+        @FieldMap extraData: Map<String, String> = mapOf()
     ): Call<TokenResponse>
 }

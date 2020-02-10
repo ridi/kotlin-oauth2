@@ -43,10 +43,15 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
         apiService = retrofit.create(ApiService::class.java)
     }
 
-    fun requestPasswordGrantAuthorization(username: String, password: String): Single<TokenResponse> =
+    fun requestPasswordGrantAuthorization(
+        username: String,
+        password: String,
+        extraData: Map<String, String> = mapOf()
+    ): Single<TokenResponse> =
         Single.create { emitter ->
-            apiService.requestToken(clientId, clientSecret, ApiService.PASSWORD_GRANT_TYPE, username, password, null)
-                .enqueue(ApiCallback(emitter))
+            apiService.requestToken(
+                clientId, clientSecret, ApiService.PASSWORD_GRANT_TYPE, username, password, null, extraData
+            ).enqueue(ApiCallback(emitter))
         }
 
     fun refreshAccessToken(refreshToken: String): Single<TokenResponse> =
