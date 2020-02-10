@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.4] - 2020-02-10
+### Changed
+- Add `extraData` argument to `Authorization::requestPasswordGrantAuthorization`.
+
+## [1.1.3] - 2019-11-06
+### Fixed
+- Fix crash when response error body is not a JSON string.
+
+## [1.1.2] - 2019-09-26
+### Fixed
+- ~Fix crash when response error body is not a JSON string.~
+
 ## [1.1.1] - 2019-01-14
 ### Changed
 - Bump `RxJava` version from 2.2.1 to 2.2.4.
