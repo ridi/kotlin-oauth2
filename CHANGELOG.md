@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 ### Changed
 - Add `extraData` argument to `Authorization::refreshAccessToken`.
+- Bump `RxJava` version from 2.2.4 to 2.2.10.
 
 ## [1.1.4] - 2020-02-10
 ### Changed
