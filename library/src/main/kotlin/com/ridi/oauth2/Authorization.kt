@@ -54,10 +54,10 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
             ).enqueue(ApiCallback(emitter))
         }
 
-    fun refreshAccessToken(refreshToken: String): Single<TokenResponse> =
+    fun refreshAccessToken(refreshToken: String, extraData: Map<String, String> = mapOf()): Single<TokenResponse> =
         Single.create { emitter ->
             apiService.requestToken(
-                clientId, clientSecret, ApiService.REFRESH_TOKEN_GRANT_TYPE, null, null, refreshToken
+                clientId, clientSecret, ApiService.REFRESH_TOKEN_GRANT_TYPE, null, null, refreshToken, extraData
             ).enqueue(ApiCallback(emitter))
         }
 

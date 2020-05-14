@@ -21,6 +21,6 @@ internal interface ApiService {
         @Field("username") username: String?,
         @Field("password") password: String?,
         @Field("refresh_token") refreshToken: String?,
-        @FieldMap extraData: Map<String, String> = mapOf()
+        @FieldMap extraData: Map<String, String>
     ): Call<TokenResponse>
 }
