@@ -7,13 +7,13 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 
 class Authorization(private val clientId: String, private val clientSecret: String, devMode: Boolean = false) {
     companion object {

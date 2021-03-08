@@ -1,6 +1,6 @@
 # kotlin-oauth2
 
-[![Build Status](https://travis-ci.org/ridi/kotlin-oauth2.svg?branch=master)](https://travis-ci.org/ridi/kotlin-oauth2)
+[![Build Status](https://github.com/ridi/kotlin-oauth2/workflows/Build/badge.svg?branch=master)](https://github.com/ridi/kotlin-oauth2/actions)
 [![Release](https://jitpack.io/v/ridi/kotlin-oauth2.svg)](https://jitpack.io/#ridi/kotlin-oauth2)
 
 JVM base OAuth2 client library written in Kotlin for RIDI account authorization
