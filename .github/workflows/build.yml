@@ -7,6 +7,12 @@ jobs:
   check:
     name: Run Check
     runs-on: ubuntu-18.04
+    env:
+      TEST_CLIENT_ID: ${{ secrets.TEST_CLIENT_ID }}
+      TEST_CLIENT_SECRET: ${{ secrets.TEST_CLIENT_SECRET }}
+      TEST_USER_IDX: ${{ secrets.TEST_USER_IDX }}
+      TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+      TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
     steps:
     - name: Checkout
@@ -27,9 +33,3 @@ jobs:
         key: wrapper-cache-ubuntu-18.04-v2
     - name: Check
       run: ./gradlew check library:test
-      with:
-        TEST_CLIENT_ID: ${{ secrets.TEST_CLIENT_ID }}
-        TEST_CLIENT_SECRET: ${{ secrets.TEST_CLIENT_SECRET }}
-        TEST_USER_IDX: ${{ secrets.TEST_USER_IDX }}
-        TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
-        TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
