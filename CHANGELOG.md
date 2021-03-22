@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.6] - 2021-03-22
+### Changed
+- Add default error description to `AuthorizationFailedException`.
+- Bump `RxJava` version from 2.2.4 to 2.2.20.
+- Bump `jwtdecode` version from 1.2.0 to 2.0.0.
+- Bump `retrofit2` and related libraries' versions from 2.6.0 to 2.6.4.
+
 ## [1.1.5] - 2020-05-14
 ### Changed
 - Add `extraData` argument to `Authorization::refreshAccessToken`.
