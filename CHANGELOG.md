@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.1.7] - 2021-04-06
+### Fixed
+- Relocate incorrectly placed default error description.
+
 ## [1.1.6] - 2021-03-22
 ### Changed
 - Add default error description to `AuthorizationFailedException`.
