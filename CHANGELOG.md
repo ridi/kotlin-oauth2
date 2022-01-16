@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [1.1.8] - 2022-01-17
 ### Changed
-- Replace `jcenter` to `mavenCentral`
+- Replace `jcenter` to `mavenCentral`.
 
 ## [1.1.7] - 2021-04-06
 ### Fixed
