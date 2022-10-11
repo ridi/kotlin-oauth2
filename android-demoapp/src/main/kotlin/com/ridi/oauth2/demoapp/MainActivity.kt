@@ -10,8 +10,8 @@ import com.auth0.android.jwt.JWT
 import com.ridi.oauth2.Authorization
 import com.ridi.oauth2.AuthorizationFailedException
 import com.ridi.oauth2.TokenResponse
-import io.reactivex.SingleObserver
-import io.reactivex.disposables.Disposable
+import io.reactivex.rxjava3.core.SingleObserver
+import io.reactivex.rxjava3.disposables.Disposable
 
 class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {

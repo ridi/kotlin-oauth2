@@ -5,8 +5,8 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
-import io.reactivex.Single
-import io.reactivex.SingleEmitter
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.core.SingleEmitter
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import retrofit2.Call
