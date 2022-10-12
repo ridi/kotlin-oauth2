@@ -81,7 +81,7 @@ class Authorization(private val clientId: String, private val clientSecret: Stri
                             return@let null
                         }
                         val errorCode = errorObject.get("error")?.asString
-                        val errorDescription = errorObject.get("error_description")?.asString
+                        val errorDescription = errorObject.get("description")?.asString
                         AuthorizationFailedException(statusCode, errorCode, errorDescription)
                     } ?: AuthorizationFailedException(statusCode)
                 )
