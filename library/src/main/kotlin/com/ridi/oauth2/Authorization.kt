@@ -19,7 +19,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 class Authorization(
     private val clientId: String,
     private val clientSecret: String,
-    private val cookieJar: CookieJar?,
+    private val cookieJar: CookieJar? = null,
     devMode: Boolean = false
 ) {
     companion object {
