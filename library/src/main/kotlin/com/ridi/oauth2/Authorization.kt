@@ -7,8 +7,8 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.core.SingleEmitter
-import okhttp3.CookieJar
 import java.util.concurrent.TimeUnit
+import okhttp3.CookieJar
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import retrofit2.Callback
