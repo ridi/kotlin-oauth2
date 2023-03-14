@@ -29,7 +29,7 @@ class MainActivity : Activity() {
             val devMode = switch.isChecked.not()
             val username = findViewById<TextView>(R.id.username).text.toString()
             val password = findViewById<TextView>(R.id.password).text.toString()
-            val authorization = Authorization(clientId, clientSecret, devMode)
+            val authorization = Authorization(clientId, clientSecret, devMode = devMode)
             authorization.requestPasswordGrantAuthorization(username, password).subscribe(TokenObserver(authorization))
         }
     }

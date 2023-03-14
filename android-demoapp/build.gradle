@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId 'com.ridi.oauth2.demoapp'
-        minSdkVersion 15
+        minSdkVersion 26
         targetSdkVersion 29
         versionCode 1
         versionName '1.0'
@@ -28,6 +28,7 @@ android {
 dependencies {
     implementation project(':library')
     implementation 'com.auth0.android:jwtdecode:2.0.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.0'
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
 }
